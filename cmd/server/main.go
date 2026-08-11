@@ -30,8 +30,12 @@ func main() {
 			port = v
 		}
 	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/8", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Todo Api 1.0.0")
+	})
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
 	})
 
 	log.Printf("Server on :%d", port)
