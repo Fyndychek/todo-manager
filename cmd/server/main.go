@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,20 +26,61 @@ var (
 
 func main() {
 	port := 8080
-	if p := os.Getenv("PORT"); p != "" {
+	p := os.Getenv("PORT")
+	if p != "" {
 		if v, err := strconv.Atoi(p); err == nil {
 			port = v
 		}
 	}
-	http.HandleFunc("/8", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Todo Api 1.0.0")
 	})
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+	http.HandleFunc("/stats", getStats)
+	//CRUD
+	http.HandleFunc("GET /todos", getTodos)
+	http.HandleFunc("POST /todos", createTodo)
+	http.HandleFunc("DELETE /todos/{id}", deleteTodo)
 
 	log.Printf("Server on :%d", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+
+}
+
+func getTodos(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(todos)
+}
+
+func createTodo(w http.ResponseWriter, r *http.Request) {
+	var t Todo
+	err := json.NewDecoder(r.Body).Decode(&t)
+	if err != nil {
+		log.Printf("Decode error: %v", err)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	counter++
+	t.ID = counter
+	t.Created = time.Now()
+	todos = append(todos, t)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(t)
+}
+
+func deleteTodo(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func getStats(w http.ResponseWriter, r *http.Request) {
 
 }
