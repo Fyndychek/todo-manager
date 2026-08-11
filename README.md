@@ -106,6 +106,7 @@ todo-manager — это backend-сервис на Go, предоставляющ
 
     .
     ├── cmd/
+    |   └── sandbox/ 
     │   └── server/            # Точка входа
     │       └── main.go
     ├── internal/
