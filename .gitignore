@@ -1,0 +1,15 @@
+
+/bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+.idea/
+.vscode/
+*.swp
+*.swo
+
+/vendor/
