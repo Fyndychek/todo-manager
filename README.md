@@ -68,7 +68,7 @@ todo-manager — это backend-сервис на Go, предоставляющ
 
     curl -X POST http://localhost:8080/todos
       -H "Content-Type: application/json"
-      -d '{"title":"Купить хлеб"}'
+      -d "{\"title\":\"Купить хлеб\"}"
 
 Ответ:
 
