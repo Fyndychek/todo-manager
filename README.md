@@ -4,6 +4,7 @@
 todo-manager — это backend-сервис на Go, предоставляющий REST API для работы со списком задач (TODO). Он поддерживает создание, чтение, удаление и получение статистики по задачам.
 
 Проект написан с акцентом на чистоту архитектуры, тестируемость и автоматизацию развёртывания. Всё это упаковано в Docker-образ и автоматически деплоится на сервер при каждом пуше в основную ветку.
+
 🚀 Возможности
 
     ✅ Создание задачи (с автоматическим ID и временем создания)
@@ -21,122 +22,116 @@ todo-manager — это backend-сервис на Go, предоставляющ
     🔄 Автоматический деплой через GitHub Actions
 
 🛠 Стек технологий
-Компонент	Технология
-Язык	Go 1.22+
-Веб-фреймворк	Стандартный net/http
-Хранилище	In‑memory (легко заменить на БД)
-Тестирование	Встроенный testing + httptest
-Контейнеризация	Docker (многоступенчатая сборка)
-CI/CD	GitHub Actions
+
+    Язык	Go 1.22+
+    Веб-фреймворк	Стандартный net/http
+    Хранилище	In‑memory (легко заменить на БД)
+    Тестирование	Встроенный testing + httptest
+    Контейнеризация	Docker (многоступенчатая сборка)
+    CI/CD	GitHub Actions
+
 ⚡ Быстрый старт
+
 Локальный запуск (без Docker)
 
-    Клонируйте репозиторий:
-    bash
+    1.Клонируйте репозиторий:
 
     git clone https://github.com/your-username/todo-manager.git
     cd todo-manager
-
-    Установите зависимости:
-    bash
+    
+    2.Установите зависимости:
 
     go mod download
 
-    Запустите сервер:
-    bash
+    3.Запустите сервер:
 
     go run cmd/server/main.go
 
     Сервер будет доступен на http://localhost:8080.
 
 Запуск через Docker
-bash
 
-docker build -t todo-manager .
-docker run -p 8080:8080 todo-manager
+    docker build -t todo-manager .
+    docker run -p 8080:8080 todo-manager
 
 📌 API Эндпоинты
-Метод	Путь	Описание
-GET	/health	Проверка работоспособности
-GET	/version	Версия сервиса
-GET	/todos	Получить список всех задач
-POST	/todos	Создать новую задачу
-DELETE	/todos/{id}	Удалить задачу по ID
-GET	/todos/stats	Получить статистику
-GET	/metrics	Метрики для Prometheus
+    
+    GET	/health	Проверка работоспособности
+    GET	/version	Версия сервиса    
+    GET	/todos	Получить список всех задач
+    POST	/todos	Создать новую задачу
+    DELETE	/todos/{id}	Удалить задачу по ID
+    GET	/todos/stats	Получить статистику
+    GET	/metrics	Метрики для Prometheus
+    
 📝 Примеры запросов
 
 Создать задачу:
-bash
 
-curl -X POST http://localhost:8080/todos \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Купить хлеб"}'
+    curl -X POST http://localhost:8080/todos \
+      -H "Content-Type: application/json" \
+      -d '{"title":"Купить хлеб"}'
 
 Ответ:
-json
 
-{
-  "id": 1,
-  "title": "Купить хлеб",
-  "completed": false,
-  "created_at": "2025-03-16T12:34:56Z"
-}
+    json
+
+    {
+      "id": 1,
+      "title": "Купить хлеб",
+      "completed": false,
+      "created_at": "2025-03-16T12:34:56Z"
+    }
 
 Получить все задачи:
-bash
 
-curl http://localhost:8080/todos
+    curl http://localhost:8080/todos
 
 Удалить задачу (ID=1):
-bash
 
-curl -X DELETE http://localhost:8080/todos/1
+    curl -X DELETE http://localhost:8080/todos/1
 
 Получить статистику:
-bash
 
-curl http://localhost:8080/todos/stats
+    curl http://localhost:8080/todos/stats
 
-json
+    json
 
-{
-  "total": 5,
-  "completed": 2,
-  "pending": 3
-}
+    {
+      "total": 5,
+      "completed": 2,
+      "pending": 3
+    }
 
 📁 Структура проекта
-text
 
-.
-├── cmd/
-│   └── server/            # Точка входа
-│       └── main.go
-├── internal/
-│   ├── config/            # Конфигурация (порт и т.д.)
-│   ├── handlers/          # HTTP-обработчики и тесты
-│   ├── models/            # Модели данных
-│   └── storage/           # Интерфейс хранилища + реализация (in-memory)
-├── Dockerfile
-├── docker-compose.yml
-├── go.mod
-├── go.sum
-└── .github/
-    └── workflows/
-        └── ci.yml         # Пайплайн GitHub Actions
+
+    .
+    ├── cmd/
+    │   └── server/            # Точка входа
+    │       └── main.go
+    ├── internal/
+    │   ├── config/            # Конфигурация (порт и т.д.)
+    │   ├── handlers/          # HTTP-обработчики и тесты
+    │   ├── models/            # Модели данных
+    │   └── storage/           # Интерфейс хранилища + реализация (in-memory)
+    ├── Dockerfile
+    ├── docker-compose.yml
+    ├── go.mod
+    ├── go.sum
+    └── .github/
+        └── workflows/
+            └── ci.yml         # Пайплайн GitHub Actions
 
 🧪 Тестирование
 
 Запустите все тесты:
-bash
 
-go test ./...
+    go test ./...
 
 Для покрытия кода:
-bash
 
-go test -cover ./...
+    go test -cover ./...
 
 🔄 CI/CD
 
