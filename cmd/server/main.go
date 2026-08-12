@@ -26,8 +26,8 @@ var (
 
 func main() {
 	port := 8080
-	p := os.Getenv("PORT")
-	if p != "" {
+
+	if p := os.Getenv("PORT"); p != "" {
 		if v, err := strconv.Atoi(p); err == nil {
 			port = v
 		}
@@ -60,8 +60,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 	var t Todo
-	err := json.NewDecoder(r.Body).Decode(&t)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		log.Printf("Decode error: %v", err)
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
@@ -78,6 +77,32 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
+	var t Todo
+	flag := false
+	idstring := r.PathValue("id")
+	id, err := strconv.Atoi(idstring)
+	if err != nil {
+		log.Printf("Invalid Id: %v", err)
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	for i := 0; i < len(todos); i++ {
+		if todos[i].ID == id {
+			t = todos[i]
+			todos = append(todos[:i], todos[i+1:]...)
+			flag = true
+			return
+		}
+	}
+	if flag == false {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(t)
 
 }
 
