@@ -39,7 +39,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
-	http.HandleFunc("/stats", getStats)
+	http.HandleFunc("GET /todos/stats", getStats)
 	//CRUD
 	http.HandleFunc("GET /todos", getTodos)
 	http.HandleFunc("POST /todos", createTodo)
@@ -78,7 +78,6 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
 	var t Todo
-	flag := false
 	idstring := r.PathValue("id")
 	id, err := strconv.Atoi(idstring)
 	if err != nil {
@@ -92,20 +91,34 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 		if todos[i].ID == id {
 			t = todos[i]
 			todos = append(todos[:i], todos[i+1:]...)
-			flag = true
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(t)
 			return
 		}
 	}
-	if flag == false {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(t)
-
+	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
 func getStats(w http.ResponseWriter, r *http.Request) {
-
+	var completed int
+	mu.Lock()
+	defer mu.Unlock()
+	//for i := 0; i < len(todos); i++
+	for _, t := range todos {
+		if t.Completed == true {
+			completed++
+		}
+	}
+	stats := struct {
+		Total     int `json:"total"`
+		Completed int `json:"completed"`
+		Pending   int `json:"pending"`
+	}{
+		Total:     len(todos),
+		Completed: completed,
+		Pending:   len(todos) - completed,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
 }
