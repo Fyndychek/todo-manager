@@ -30,7 +30,7 @@ var (
 )
 
 func main() {
-	port := 8081
+	port := 8080
 
 	if p := os.Getenv("PORT"); p != "" {
 		if v, err := strconv.Atoi(p); err == nil {
