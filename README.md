@@ -101,7 +101,7 @@ todo-manager — это backend-сервис на Go, предоставляющ
 
 изменить содержание или статус задачи:
 
-    curl -X PATCH http://localhost:8081/todos/1 
+    curl -X PATCH http://localhost:8080/todos/1 
       -H "Content-Type: application/json" 
       -d "{\"title\":\"buy bread\",\"completed\":true}"
 
