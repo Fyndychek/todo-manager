@@ -66,17 +66,15 @@ todo-manager — это backend-сервис на Go, предоставляющ
 
 Создать задачу:
 
-    curl -X POST http://localhost:8080/todos
-      -H "Content-Type: application/json"
-      -d "{\"title\":\"Купить хлеб\"}"
+    curl -X PATCH http://localhost:8081/todos/1 
+      -H "Content-Type: application/json" 
+      -d "{\"title\":\"buy bread\",\"completed\":true}"
 
-Ответ:
-
-    json
+Ответ на создание задачи:
 
     {
       "id": 1,
-      "title": "Купить хлеб",
+      "title": "buy bread",
       "completed": false,
       "created_at": "2025-03-16T12:34:56Z"
     }
@@ -93,13 +91,19 @@ todo-manager — это backend-сервис на Go, предоставляющ
 
     curl http://localhost:8080/todos/stats
 
-    json
+ответ на запрос статистики:
 
     {
       "total": 5,
       "completed": 2,
       "pending": 3
     }
+
+изменить содержание или статус задачи:
+
+    curl -X PATCH http://localhost:8081/todos/1 
+      -H "Content-Type: application/json" 
+      -d "{\"title\":\"buy bread\",\"completed\":\true\}"
 
 📁 Структура проекта
 

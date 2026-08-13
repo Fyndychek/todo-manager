@@ -18,6 +18,10 @@ type Todo struct {
 	Completed bool      `json:"completed"`
 	Created   time.Time `json:"created_at"`
 }
+type UpdateTodoRequest struct {
+	Title     *string `json:"title"`
+	Completed *bool   `json:"completed"`
+}
 
 var (
 	todos   = []Todo{}
@@ -26,7 +30,7 @@ var (
 )
 
 func main() {
-	port := 8080
+	port := 8081
 
 	if p := os.Getenv("PORT"); p != "" {
 		if v, err := strconv.Atoi(p); err == nil {
@@ -45,41 +49,56 @@ func main() {
 	http.HandleFunc("GET /todos", getTodos)
 	http.HandleFunc("POST /todos", createTodo)
 	http.HandleFunc("DELETE /todos/{id}", deleteTodo)
+	http.HandleFunc("PATCH /todos/{id}", updateTodo)
 
 	log.Printf("Server on :%d", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
 }
 
+func respondError(w http.ResponseWriter, message string, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"error": message})
+
+}
+
 func getTodos(w http.ResponseWriter, r *http.Request) {
+
 	mu.Lock()
 	defer mu.Unlock()
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(todos)
 }
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 	var t Todo
-	//проблема с чтением тела
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		log.Printf("Decode error: %v", err)
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-	t.Title = strings.TrimSpace(t.Title)
-	if t.Title == "" {
-		log.Printf("Empty request")
-		http.Error(w, "Empty request", http.StatusBadRequest)
+		respondError(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 	if len(t.Title) > 255 {
 		log.Printf("too long request")
-		http.Error(w, "too long request(max 255)", http.StatusBadRequest)
+		respondError(w, "too long request(max 255)", http.StatusBadRequest)
 		return
 	}
+	//проблема с чтением тела
+	t.Title = strings.TrimSpace(t.Title)
+	if t.Title == "" {
+		log.Printf("Empty request")
+		respondError(w, "Empty request", http.StatusBadRequest)
+		return
+	}
+
 	mu.Lock()
 	defer mu.Unlock()
+	if len(todos) > 255 {
+		log.Printf("too many tasks")
+		respondError(w, "too many tasks", http.StatusConflict)
+		return
+	}
 	counter++
 	t.ID = counter
 	t.Created = time.Now()
@@ -89,8 +108,59 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(t)
 }
 
+func updateTodo(w http.ResponseWriter, r *http.Request) {
+	var upd UpdateTodoRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	if err := json.NewDecoder(r.Body).Decode(&upd); err != nil {
+		log.Printf("Decode error: %v", err)
+		respondError(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	//извлечение id
+	idstring := r.PathValue("id")
+	id, err := strconv.Atoi(idstring)
+	if err != nil {
+		log.Printf("Invalid Id: %v", err)
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	//проверка контента тайтла задачи
+	if upd.Title != nil {
+		*upd.Title = strings.TrimSpace(*upd.Title)
+		if *upd.Title == "" {
+			log.Printf("Empty request")
+			respondError(w, "Empty request", http.StatusBadRequest)
+			return
+		}
+		if len(*upd.Title) > 255 {
+			log.Printf("too long request")
+			respondError(w, "too long request(max 255)", http.StatusBadRequest)
+			return
+		}
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	for i := range todos {
+		if todos[i].ID == id {
+			if upd.Title != nil {
+				todos[i].Title = *upd.Title
+			}
+			if upd.Completed != nil {
+				todos[i].Completed = *upd.Completed
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(todos[i])
+			return
+		}
+	}
+	respondError(w, "Not Found", http.StatusNotFound)
+	log.Printf("Not Found ID")
+}
+
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
-	var t Todo
 	idstring := r.PathValue("id")
 	id, err := strconv.Atoi(idstring)
 	if err != nil {
@@ -100,8 +170,8 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	for i := 0; i < len(todos); i++ {
-		if todos[i].ID == id {
+	for i, t := range todos {
+		if t.ID == id {
 			t = todos[i]
 			todos = append(todos[:i], todos[i+1:]...)
 			w.Header().Set("Content-Type", "application/json")
@@ -110,7 +180,7 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	http.Error(w, "Not Found", http.StatusNotFound)
+	respondError(w, "Not Found", http.StatusNotFound)
 	log.Printf("Not Found ID")
 }
 
