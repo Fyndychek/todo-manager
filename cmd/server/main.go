@@ -12,12 +12,15 @@ import (
 	"time"
 )
 
+// структура задачи
 type Todo struct {
 	ID        int       `json:"id"`
 	Title     string    `json:"title"`
 	Completed bool      `json:"completed"`
 	Created   time.Time `json:"created_at"`
 }
+
+// структура патча задачи
 type UpdateTodoRequest struct {
 	Title     *string `json:"title"`
 	Completed *bool   `json:"completed"`
@@ -30,6 +33,7 @@ var (
 )
 
 func main() {
+
 	port := 8080
 
 	if p := os.Getenv("PORT"); p != "" {
@@ -45,18 +49,32 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 	http.HandleFunc("GET /todos/stats", getStats)
+
 	//CRUD
 	http.HandleFunc("GET /todos", getTodos)
 	http.HandleFunc("POST /todos", createTodo)
 	http.HandleFunc("DELETE /todos/{id}", deleteTodo)
 	http.HandleFunc("PATCH /todos/{id}", updateTodo)
 
-	log.Printf("Server on :%d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	//запуск
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: nil,
+	}
+
+	go func() {
+		log.Printf("Server starting an :%d", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+	//log.Printf("Server starting on :%d", port)
+	//log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
 }
 
 func respondError(w http.ResponseWriter, message string, status int) {
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
@@ -65,6 +83,7 @@ func respondError(w http.ResponseWriter, message string, status int) {
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 
+	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
@@ -72,6 +91,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
+
 	var t Todo
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
@@ -92,6 +112,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
 	if len(todos) > 255 {
@@ -109,6 +130,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateTodo(w http.ResponseWriter, r *http.Request) {
+
 	var upd UpdateTodoRequest
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&upd); err != nil {
@@ -124,7 +146,6 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-
 	//проверка контента тайтла задачи
 	if upd.Title != nil {
 		*upd.Title = strings.TrimSpace(*upd.Title)
@@ -140,6 +161,7 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
 	for i := range todos {
@@ -161,6 +183,7 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
+
 	idstring := r.PathValue("id")
 	id, err := strconv.Atoi(idstring)
 	if err != nil {
@@ -168,6 +191,8 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
+
+	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
 	for i, t := range todos {
@@ -185,7 +210,10 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStats(w http.ResponseWriter, r *http.Request) {
+
 	var completed int
+
+	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
 	//for i := 0; i < len(todos); i++
