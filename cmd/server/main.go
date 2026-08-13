@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -60,9 +61,21 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 	var t Todo
+	//проблема с чтением тела
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		log.Printf("Decode error: %v", err)
 		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	t.Title = strings.TrimSpace(t.Title)
+	if t.Title == "" {
+		log.Printf("Empty request")
+		http.Error(w, "Empty request", http.StatusBadRequest)
+		return
+	}
+	if len(t.Title) > 255 {
+		log.Printf("too long request")
+		http.Error(w, "too long request(max 255)", http.StatusBadRequest)
 		return
 	}
 	mu.Lock()
@@ -98,6 +111,7 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Error(w, "Not Found", http.StatusNotFound)
+	log.Printf("Not Found ID")
 }
 
 func getStats(w http.ResponseWriter, r *http.Request) {
