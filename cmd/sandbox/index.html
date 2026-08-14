@@ -7,10 +7,12 @@
     <h1>Todo List</h1>
     <input type="text" id="title" placeholder="New task">
     <button onclick="addTodo()">Add</button>
+    <input type="int" id="id" placeholder="Delete">
+    <button onclick="deleteTodo()">Delete</button>
     <ul id="list"></ul>
 
     <script>
-        const API_URL = 'http://localhost:8080'; // ваш Go-сервер
+        const API_URL = 'http://localhost:8080';
 
         async function loadTodos() {
             const res = await fetch(`${API_URL}/todos`);
@@ -32,6 +34,17 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({title, completed: false})
+            });
+            input.value = '';
+            loadTodos();
+        }
+
+        async function deleteTodo(){
+            const input = document.getElementById('id');
+            const id = input.value.trim();
+            if (!id) return;
+            await fetch(`${API_URL}/todos/${id}`, {
+                method: 'DELETE',
             });
             input.value = '';
             loadTodos();
