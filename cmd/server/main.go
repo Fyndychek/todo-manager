@@ -44,20 +44,20 @@ func main() {
 			port = v
 		}
 	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Todo Api 1.0.0")
-	})
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	http.HandleFunc("/health", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
-	})
-	http.HandleFunc("GET /todos/stats", getStats)
+	}))
+	http.HandleFunc("GET /todos/stats", corsMiddleware(getStats))
 
 	//CRUD
-	http.HandleFunc("GET /todos", getTodos)
-	http.HandleFunc("POST /todos", createTodo)
-	http.HandleFunc("DELETE /todos/{id}", deleteTodo)
-	http.HandleFunc("PATCH /todos/{id}", updateTodo)
+	http.HandleFunc("GET /todos", corsMiddleware(getTodos))
+	http.HandleFunc("POST /todos", corsMiddleware(createTodo))
+	http.HandleFunc("DELETE /todos/{id}", corsMiddleware(deleteTodo))
+	http.HandleFunc("PATCH /todos/{id}", corsMiddleware(updateTodo))
 
 	//запуск
 	srv := &http.Server{
@@ -85,6 +85,24 @@ func main() {
 	}
 	log.Println("Server exited gracefully")
 
+}
+
+func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Добавляем заголовки CORS
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// Если это preflight OPTIONS-запрос, отвечаем сразу, не передавая дальше
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Иначе передаём управление основному обработчику
+		next(w, r)
+	}
 }
 
 func respondError(w http.ResponseWriter, message string, status int) {

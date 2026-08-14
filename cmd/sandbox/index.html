@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Todo App</title>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <input type="text" id="title" placeholder="New task">
+    <button onclick="addTodo()">Add</button>
+    <ul id="list"></ul>
+
+    <script>
+        const API_URL = 'http://localhost:8081'; // ваш Go-сервер
+
+        async function loadTodos() {
+            const res = await fetch(`${API_URL}/todos`);
+            const todos = await res.json();
+            const ul = document.getElementById('list');
+            ul.innerHTML = '';
+            todos.forEach(t => {
+                const li = document.createElement('li');
+                li.textContent = `${t.title} ${t.completed ? '✅' : '⬜'}`;
+                ul.appendChild(li);
+            });
+        }
+
+        async function addTodo() {
+            const input = document.getElementById('title');
+            const title = input.value.trim();
+            if (!title) return;
+            await fetch(`${API_URL}/todos`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title, completed: false})
+            });
+            input.value = '';
+            loadTodos();
+        }
+
+        loadTodos();
+    </script>
+</body>
+</html>
