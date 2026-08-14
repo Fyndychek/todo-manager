@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -45,7 +46,14 @@ func main() {
 		}
 	}
 	http.HandleFunc("/", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Todo Api 1.0.0")
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		// Получаем текущую рабочую директорию
+		wd, _ := os.Getwd()
+		filePath := filepath.Join(wd, "cmd", "sandbox", "index.html")
+		http.ServeFile(w, r, filePath)
 	}))
 	http.HandleFunc("/health", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
