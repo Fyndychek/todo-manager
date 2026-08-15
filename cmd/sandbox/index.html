@@ -7,8 +7,6 @@
     <h1>Todo List</h1>
     <input type="text" id="title" placeholder="New task">
     <button onclick="addTodo()">Add</button>
-    <input type="int" id="id" placeholder="Delete">
-    <button onclick="deleteTodo()">Delete</button>
     <ul id="list"></ul>
 
     <script>
@@ -19,11 +17,29 @@
             const todos = await res.json();
             const ul = document.getElementById('list');
             ul.innerHTML = '';
-            todos.forEach(t => {
+            todos.forEach(t => {    
                 const li = document.createElement('li');
-                li.textContent = `${t.title} ${t.completed ? '✅' : '⬜'}`;
+                li.textContent = t.title;
+                const btn = document.createElement('button');
+                const del = document.createElement('button');
+                btn.textContent = t.completed ? '✅' : '⬜';
+                btn.onclick = () => toggleTodo(t.id, t.completed);
+                del.textContent = '✗';
+                del.onclick = () => deleteTodo(t.id);
+                li.appendChild(btn);
+                li.appendChild(del);
                 ul.appendChild(li);
+            
             });
+        }
+
+        async function toggleTodo(id, completed){
+            await fetch(`${API_URL}/todos/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({completed: !completed})
+            });
+            loadTodos();
         }
 
         async function addTodo() {
@@ -39,14 +55,11 @@
             loadTodos();
         }
 
-        async function deleteTodo(){
-            const input = document.getElementById('id');
-            const id = input.value.trim();
+        async function deleteTodo(id){
             if (!id) return;
             await fetch(`${API_URL}/todos/${id}`, {
                 method: 'DELETE',
             });
-            input.value = '';
             loadTodos();
         }
 
