@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✨ My Todos</title>
+  <style>
+    /* ===== RESET & GLOBAL ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0b0e14;
+      color: #e4e9f2;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .app {
+      max-width: 700px;
+      width: 100%;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .logo span {
+      background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      color: #fff;
+    }
+    .stats-badge {
+      background: #1e2430;
+      padding: 0.4rem 1rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      display: flex;
+      gap: 1rem;
+      border: 1px solid #2a3140;
+    }
+    .stats-badge span {
+      font-weight: 600;
+      color: #a78bfa;
+    }
+
+    /* ===== ADD FORM ===== */
+    .add-form {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .add-form input {
+      flex: 1;
+      padding: 0.9rem 1.2rem;
+      border-radius: 16px;
+      border: 2px solid #1e2430;
+      background: #121820;
+      color: #e4e9f2;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+    .add-form input:focus {
+      outline: none;
+      border-color: #7c3aed;
+    }
+    .add-form input::placeholder {
+      color: #5b657a;
+    }
+    .add-form button {
+      padding: 0.9rem 2rem;
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      border: none;
+      border-radius: 16px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .add-form button:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+    }
+    .add-form button:active {
+      transform: scale(0.97);
+    }
+
+    /* ===== TODO LIST ===== */
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #121820;
+      padding: 0.9rem 1.2rem;
+      border-radius: 16px;
+      border: 1px solid #1e2430;
+      transition: all 0.2s;
+      animation: fadeIn 0.25s ease;
+    }
+    .todo-item:hover {
+      border-color: #2a3140;
+      background: #181f2b;
+    }
+    .todo-item.completed .todo-text {
+      text-decoration: line-through;
+      color: #5b657a;
+    }
+    .todo-item .todo-check {
+      width: 24px;
+      height: 24px;
+      accent-color: #7c3aed;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .todo-item .todo-text {
+      flex: 1;
+      word-break: break-word;
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+    .todo-item .todo-delete {
+      background: none;
+      border: none;
+      color: #6b7a8f;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 0.3rem;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1;
+    }
+    .todo-item .todo-delete:hover {
+      background: #2a1f2a;
+      color: #f87171;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 0;
+      color: #5b657a;
+      font-size: 1.1rem;
+    }
+
+    /* ===== TOAST ===== */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 999;
+    }
+    .toast {
+      background: #1e2430;
+      color: #e4e9f2;
+      padding: 0.9rem 1.5rem;
+      border-radius: 14px;
+      border-left: 5px solid #a78bfa;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      animation: slideIn 0.3s ease;
+      font-size: 0.95rem;
+    }
+    .toast.error {
+      border-left-color: #f87171;
+    }
+    .toast.success {
+      border-left-color: #34d399;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 500px) {
+      .header { flex-direction: column; align-items: stretch; }
+      .stats-badge { justify-content: center; }
+      .add-form { flex-wrap: wrap; }
+      .add-form button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo">✓ <span>Todo</span></div>
+    <div class="stats-badge" id="stats">
+      Всего: <span id="total">0</span>
+      Выполнено: <span id="completed">0</span>
+      Осталось: <span id="pending">0</span>
+    </div>
+  </header>
+
+  <form class="add-form" id="addForm">
+    <input type="text" id="newTitle" placeholder="Что нужно сделать?" maxlength="255" autofocus />
+    <button type="submit">Добавить</button>
+  </form>
+
+  <div class="todo-list" id="todoList">
+    <div class="empty-state">✨ Нет задач — добавьте первую!</div>
+  </div>
+</div>
+
+<!-- Toast-контейнер -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ===== API BASE =====
+  const API_BASE = window.location.origin; // используем тот же хост
+
+  // ===== STATE =====
+  let todos = [];
+
+  // ===== DOM REFS =====
+  const todoList = document.getElementById('todoList');
+  const addForm = document.getElementById('addForm');
+  const newTitle = document.getElementById('newTitle');
+  const totalSpan = document.getElementById('total');
+  const completedSpan = document.getElementById('completed');
+  const pendingSpan = document.getElementById('pending');
+
+  // ===== TOAST =====
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // ===== FETCH HELPERS =====
+  async function fetchTodos() {
+    const res = await fetch(`${API_BASE}/todos`);
+    if (!res.ok) throw new Error('Не удалось загрузить задачи');
+    return res.json();
+  }
+
+  async function createTodo(title) {
+    const res = await fetch(`${API_BASE}/todos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Ошибка создания');
+    }
+    return res.json();
+  }
+
+  async function updateTodo(id, patch) {
+    const res = await fetch(`${API_BASE}/todos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Ошибка обновления');
+    }
+    return res.json();
+  }
+
+  async function deleteTodo(id) {
+    const res = await fetch(`${API_BASE}/todos/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Ошибка удаления');
+    }
+    return res.json();
+  }
+
+  async function fetchStats() {
+    const res = await fetch(`${API_BASE}/todos/stats`);
+    if (!res.ok) throw new Error('Ошибка статистики');
+    return res.json();
+  }
+
+  // ===== RENDER =====
+  function renderTodos() {
+    if (todos.length === 0) {
+      todoList.innerHTML = `<div class="empty-state">✨ Нет задач — добавьте первую!</div>`;
+      updateStats(0, 0, 0);
+      return;
+    }
+    let html = '';
+    todos.forEach(t => {
+      const checked = t.completed ? 'checked' : '';
+      const completedClass = t.completed ? 'completed' : '';
+      html += `
+        <div class="todo-item ${completedClass}" data-id="${t.id}">
+          <input type="checkbox" class="todo-check" ${checked} />
+          <span class="todo-text">${escapeHtml(t.title)}</span>
+          <button class="todo-delete" title="Удалить">✕</button>
+        </div>
+      `;
+    });
+    todoList.innerHTML = html;
+
+    // Привязываем события
+    todoList.querySelectorAll('.todo-item').forEach(item => {
+      const id = parseInt(item.dataset.id);
+      const check = item.querySelector('.todo-check');
+      const delBtn = item.querySelector('.todo-delete');
+
+      check.addEventListener('change', async () => {
+        try {
+          const updated = await updateTodo(id, { completed: check.checked });
+          // обновим локально
+          const idx = todos.findIndex(t => t.id === id);
+          if (idx !== -1) todos[idx] = updated;
+          renderTodos();
+          updateStatsFromTodos();
+          showToast(`Задача ${check.checked ? 'выполнена' : 'восстановлена'}`, 'success');
+        } catch (e) {
+          showToast(e.message, 'error');
+          check.checked = !check.checked; // откат
+        }
+      });
+
+      delBtn.addEventListener('click', async () => {
+        if (!confirm('Удалить задачу?')) return;
+        try {
+          await deleteTodo(id);
+          todos = todos.filter(t => t.id !== id);
+          renderTodos();
+          updateStatsFromTodos();
+          showToast('Задача удалена', 'success');
+        } catch (e) {
+          showToast(e.message, 'error');
+        }
+      });
+    });
+
+    updateStatsFromTodos();
+  }
+
+  function updateStatsFromTodos() {
+    const total = todos.length;
+    const completed = todos.filter(t => t.completed).length;
+    const pending = total - completed;
+    updateStats(total, completed, pending);
+  }
+
+  function updateStats(total, completed, pending) {
+    totalSpan.textContent = total;
+    completedSpan.textContent = completed;
+    pendingSpan.textContent = pending;
+  }
+
+  // простая защита от XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ===== LOAD DATA =====
+  async function loadAll() {
+    try {
+      todos = await fetchTodos();
+      renderTodos();
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  }
+
+  // ===== ADD FORM =====
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = newTitle.value.trim();
+    if (!title) {
+      showToast('Введите текст задачи', 'error');
+      return;
+    }
+    if (title.length > 255) {
+      showToast('Максимум 255 символов', 'error');
+      return;
+    }
+    try {
+      const newTodo = await createTodo(title);
+      todos.push(newTodo);
+      renderTodos();
+      newTitle.value = '';
+      newTitle.focus();
+      showToast('Задача добавлена', 'success');
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  });
+
+  // ===== START =====
+  loadAll();
+
+  // обновляем статистику каждые 10 секунд (на случай изменений извне)
+  setInterval(async () => {
+    try {
+      const stats = await fetchStats();
+      updateStats(stats.total, stats.completed, stats.pending);
+    } catch (_) { /* игнорируем */ }
+  }, 10000);
+</script>
+</body>
+</html>

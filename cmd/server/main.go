@@ -45,8 +45,18 @@ func main() {
 			port = v
 		}
 	}
-	http.HandleFunc("/", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
+	http.HandleFunc("/neiroslop", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/neiroslop" {
+			http.NotFound(w, r)
+			return
+		}
+		// Получаем текущую рабочую директорию
+		wd, _ := os.Getwd()
+		filePath := filepath.Join(wd, "cmd", "sandbox", "index2.html")
+		http.ServeFile(w, r, filePath)
+	}))
+	http.HandleFunc("/handmade", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/handmade" {
 			http.NotFound(w, r)
 			return
 		}
