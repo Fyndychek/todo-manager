@@ -6,11 +6,7 @@
   <title>✨ NeiroSlop Todo</title>
   <style>
     /* ===== RESET & GLOBAL ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: #0b0e14;
@@ -20,10 +16,7 @@
       justify-content: center;
       padding: 2rem 1rem;
     }
-    .app {
-      max-width: 800px;
-      width: 100%;
-    }
+    .app { max-width: 800px; width: 100%; }
 
     /* ===== HEADER ===== */
     .header {
@@ -57,10 +50,7 @@
       gap: 1.2rem;
       border: 1px solid #2a3140;
     }
-    .stats-badge span {
-      font-weight: 600;
-      color: #f472b6;
-    }
+    .stats-badge span { font-weight: 600; color: #f472b6; }
 
     /* ===== CONTROLS ===== */
     .controls {
@@ -89,10 +79,7 @@
       font-size: 0.85rem;
       transition: all 0.2s;
     }
-    .filter-btn:hover {
-      border-color: #f472b6;
-      color: #e4e9f2;
-    }
+    .filter-btn:hover { border-color: #f472b6; color: #e4e9f2; }
     .filter-btn.active {
       background: linear-gradient(135deg, #f472b6, #ec4899);
       border-color: transparent;
@@ -116,9 +103,7 @@
       cursor: pointer;
       outline: none;
     }
-    .sort-group select:focus {
-      border-color: #f472b6;
-    }
+    .sort-group select:focus { border-color: #f472b6; }
     .sort-order-btn {
       background: transparent;
       border: 1px solid #2a3140;
@@ -133,10 +118,7 @@
       justify-content: center;
       transition: all 0.2s;
     }
-    .sort-order-btn:hover {
-      border-color: #f472b6;
-      color: #e4e9f2;
-    }
+    .sort-order-btn:hover { border-color: #f472b6; color: #e4e9f2; }
     .sort-order-btn.active {
       border-color: #f472b6;
       background: rgba(244, 114, 182, 0.15);
@@ -159,13 +141,8 @@
       font-size: 1rem;
       transition: border 0.2s;
     }
-    .add-form input:focus {
-      outline: none;
-      border-color: #f472b6;
-    }
-    .add-form input::placeholder {
-      color: #5b657a;
-    }
+    .add-form input:focus { outline: none; border-color: #f472b6; }
+    .add-form input::placeholder { color: #5b657a; }
     .add-form button {
       padding: 0.9rem 2rem;
       background: linear-gradient(135deg, #f472b6, #ec4899);
@@ -182,9 +159,7 @@
       transform: scale(1.02);
       box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);
     }
-    .add-form button:active {
-      transform: scale(0.97);
-    }
+    .add-form button:active { transform: scale(0.97); }
 
     /* ===== TODO LIST ===== */
     .todo-list {
@@ -203,17 +178,13 @@
       transition: all 0.2s;
       animation: fadeIn 0.25s ease;
     }
-    .todo-item:hover {
-      border-color: #2a3140;
-      background: #181f2b;
-    }
+    .todo-item:hover { border-color: #2a3140; background: #181f2b; }
     .todo-item.completed .todo-text {
       text-decoration: line-through;
       color: #5b657a;
     }
     .todo-item .todo-check {
-      width: 24px;
-      height: 24px;
+      width: 24px; height: 24px;
       accent-color: #ec4899;
       cursor: pointer;
       flex-shrink: 0;
@@ -274,12 +245,8 @@
       animation: slideIn 0.3s ease;
       font-size: 0.95rem;
     }
-    .toast.error {
-      border-left-color: #f87171;
-    }
-    .toast.success {
-      border-left-color: #34d399;
-    }
+    .toast.error { border-left-color: #f87171; }
+    .toast.success { border-left-color: #34d399; }
 
     /* ===== ANIMATIONS ===== */
     @keyframes fadeIn {
@@ -291,7 +258,6 @@
       to { opacity: 1; transform: translateX(0); }
     }
 
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 600px) {
       .header { flex-direction: column; align-items: stretch; }
       .stats-badge { justify-content: center; }
@@ -345,269 +311,277 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-  // ===== CONFIG =====
-  const API_BASE = window.location.origin;
+  (function() {
+    'use strict';
 
-  // ===== STATE =====
-  let todos = [];
-  let currentFilter = 'all';
-  let currentSort = 'created';
-  let currentOrder = 'asc'; // 'asc' или 'desc'
+    const API_BASE = window.location.origin;
 
-  // ===== DOM REFS =====
-  const todoList = document.getElementById('todoList');
-  const addForm = document.getElementById('addForm');
-  const newTitle = document.getElementById('newTitle');
-  const totalSpan = document.getElementById('total');
-  const completedSpan = document.getElementById('completed');
-  const pendingSpan = document.getElementById('pending');
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const sortField = document.getElementById('sortField');
-  const sortOrderBtn = document.getElementById('sortOrderBtn');
+    // ===== STATE =====
+    let todos = [];
+    let currentFilter = 'all';
+    let currentSort = 'created';
+    let currentOrder = 'asc';
 
-  // ===== TOAST =====
-  function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transition = 'opacity 0.3s';
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
+    // ===== DOM REFS =====
+    const todoList = document.getElementById('todoList');
+    const addForm = document.getElementById('addForm');
+    const newTitle = document.getElementById('newTitle');
+    const totalSpan = document.getElementById('total');
+    const completedSpan = document.getElementById('completed');
+    const pendingSpan = document.getElementById('pending');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const sortField = document.getElementById('sortField');
+    const sortOrderBtn = document.getElementById('sortOrderBtn');
 
-  // ===== BUILD URL =====
-  function buildTodosUrl() {
-    const params = new URLSearchParams();
-    params.set('filter', currentFilter);
-    params.set('sort', currentSort);
-    params.set('order', currentOrder);
-    return `${API_BASE}/todos?${params.toString()}`;
-  }
-
-  // ===== FETCH HELPERS =====
-  async function fetchTodos() {
-    const url = buildTodosUrl();
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Не удалось загрузить задачи');
-    return res.json();
-  }
-
-  async function createTodo(title) {
-    const res = await fetch(`${API_BASE}/todos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Ошибка создания');
+    // ===== TOAST =====
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
-    return res.json();
-  }
 
-  async function updateTodo(id, patch) {
-    const res = await fetch(`${API_BASE}/todos/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch)
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Ошибка обновления');
+    // ===== BUILD URL =====
+    function buildTodosUrl() {
+      const params = new URLSearchParams();
+      params.set('filter', currentFilter);
+      params.set('sort', currentSort);
+      params.set('order', currentOrder);
+      return `${API_BASE}/todos?${params.toString()}`;
     }
-    return res.json();
-  }
 
-  async function deleteTodo(id) {
-    const res = await fetch(`${API_BASE}/todos/${id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Ошибка удаления');
+    // ===== FETCH HELPERS =====
+    async function fetchTodos() {
+      const url = buildTodosUrl();
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Не удалось загрузить задачи');
+      const data = await res.json();
+      // гарантируем массив
+      return Array.isArray(data) ? data : [];
     }
-    return res.json();
-  }
 
-  async function fetchStats() {
-    const res = await fetch(`${API_BASE}/todos/stats`);
-    if (!res.ok) throw new Error('Ошибка статистики');
-    return res.json();
-  }
-
-  // ===== RENDER =====
-  function renderTodos() {
-    if (todos.length === 0) {
-      todoList.innerHTML = `<div class="empty-state">✨ Нет задач — добавьте первую!</div>`;
-      updateStats(0, 0, 0);
-      return;
-    }
-    let html = '';
-    todos.forEach(t => {
-      const checked = t.completed ? 'checked' : '';
-      const completedClass = t.completed ? 'completed' : '';
-      const createdStr = new Date(t.created_at).toLocaleDateString('ru-RU', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+    async function createTodo(title) {
+      const res = await fetch(`${API_BASE}/todos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
       });
-      html += `
-        <div class="todo-item ${completedClass}" data-id="${t.id}">
-          <input type="checkbox" class="todo-check" ${checked} />
-          <span class="todo-text">${escapeHtml(t.title)}</span>
-          <span class="todo-meta">${createdStr}</span>
-          <button class="todo-delete" title="Удалить">✕</button>
-        </div>
-      `;
-    });
-    todoList.innerHTML = html;
-
-    // Привязываем события
-    todoList.querySelectorAll('.todo-item').forEach(item => {
-      const id = parseInt(item.dataset.id);
-      const check = item.querySelector('.todo-check');
-      const delBtn = item.querySelector('.todo-delete');
-
-      check.addEventListener('change', async () => {
-        try {
-          const updated = await updateTodo(id, { completed: check.checked });
-          // обновим локально
-          const idx = todos.findIndex(t => t.id === id);
-          if (idx !== -1) todos[idx] = updated;
-          renderTodos();
-          updateStatsFromTodos();
-          showToast(`Задача ${check.checked ? 'выполнена' : 'восстановлена'}`, 'success');
-        } catch (e) {
-          showToast(e.message, 'error');
-          check.checked = !check.checked; // откат
-        }
-      });
-
-      delBtn.addEventListener('click', async () => {
-        if (!confirm('Удалить задачу?')) return;
-        try {
-          await deleteTodo(id);
-          // После удаления перезагружаем список с текущими фильтрами/сортировкой
-          await loadTodos();
-          showToast('Задача удалена', 'success');
-        } catch (e) {
-          showToast(e.message, 'error');
-        }
-      });
-    });
-
-    updateStatsFromTodos();
-  }
-
-  function updateStatsFromTodos() {
-    const total = todos.length;
-    const completed = todos.filter(t => t.completed).length;
-    const pending = total - completed;
-    updateStats(total, completed, pending);
-  }
-
-  function updateStats(total, completed, pending) {
-    totalSpan.textContent = total;
-    completedSpan.textContent = completed;
-    pendingSpan.textContent = pending;
-  }
-
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // ===== LOAD DATA =====
-  async function loadTodos() {
-    try {
-      todos = await fetchTodos();
-      renderTodos();
-    } catch (e) {
-      showToast(e.message, 'error');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Ошибка создания');
+      }
+      return res.json();
     }
-  }
 
-  // ===== UPDATE CONTROLS UI =====
-  function updateFilterUI() {
+    async function updateTodo(id, patch) {
+      const res = await fetch(`${API_BASE}/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Ошибка обновления');
+      }
+      return res.json();
+    }
+
+    async function deleteTodo(id) {
+      const res = await fetch(`${API_BASE}/todos/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Ошибка удаления');
+      }
+      return res.json();
+    }
+
+    async function fetchStats() {
+      const res = await fetch(`${API_BASE}/todos/stats`);
+      if (!res.ok) throw new Error('Ошибка статистики');
+      return res.json();
+    }
+
+    // ===== RENDER =====
+    function renderTodos() {
+      // защита от null/undefined
+      if (!Array.isArray(todos)) todos = [];
+
+      if (todos.length === 0) {
+        todoList.innerHTML = `<div class="empty-state">✨ Нет задач — добавьте первую!</div>`;
+        updateStats(0, 0, 0);
+        return;
+      }
+
+      let html = '';
+      todos.forEach(t => {
+        const checked = t.completed ? 'checked' : '';
+        const completedClass = t.completed ? 'completed' : '';
+        const createdStr = new Date(t.created_at).toLocaleDateString('ru-RU', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        html += `
+          <div class="todo-item ${completedClass}" data-id="${t.id}">
+            <input type="checkbox" class="todo-check" ${checked} />
+            <span class="todo-text">${escapeHtml(t.title)}</span>
+            <span class="todo-meta">${createdStr}</span>
+            <button class="todo-delete" title="Удалить">✕</button>
+          </div>
+        `;
+      });
+      todoList.innerHTML = html;
+
+      // Привязываем события
+      todoList.querySelectorAll('.todo-item').forEach(item => {
+        const id = parseInt(item.dataset.id);
+        const check = item.querySelector('.todo-check');
+        const delBtn = item.querySelector('.todo-delete');
+
+        check.addEventListener('change', async () => {
+          try {
+            await updateTodo(id, { completed: check.checked });
+            // После обновления перезагружаем список, чтобы синхронизировать с фильтром
+            await loadTodos();
+            showToast(`Задача ${check.checked ? 'выполнена' : 'восстановлена'}`, 'success');
+          } catch (e) {
+            showToast(e.message, 'error');
+            check.checked = !check.checked; // откат
+          }
+        });
+
+        delBtn.addEventListener('click', async () => {
+          if (!confirm('Удалить задачу?')) return;
+          try {
+            await deleteTodo(id);
+            await loadTodos();
+            showToast('Задача удалена', 'success');
+          } catch (e) {
+            showToast(e.message, 'error');
+          }
+        });
+      });
+
+      updateStatsFromTodos();
+    }
+
+    function updateStatsFromTodos() {
+      if (!Array.isArray(todos)) todos = [];
+      const total = todos.length;
+      const completed = todos.filter(t => t.completed).length;
+      const pending = total - completed;
+      updateStats(total, completed, pending);
+    }
+
+    function updateStats(total, completed, pending) {
+      totalSpan.textContent = total;
+      completedSpan.textContent = completed;
+      pendingSpan.textContent = pending;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ===== LOAD DATA =====
+    async function loadTodos() {
+      try {
+        todos = await fetchTodos(); // теперь всегда массив
+        renderTodos();
+      } catch (e) {
+        showToast(e.message, 'error');
+        // в случае ошибки оставляем старые данные (или сбрасываем в []?)
+        if (!Array.isArray(todos)) todos = [];
+        renderTodos(); // отрендерим то, что есть
+      }
+    }
+
+    // ===== UPDATE CONTROLS UI =====
+    function updateFilterUI() {
+      filterBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === currentFilter);
+      });
+    }
+
+    function updateSortUI() {
+      sortField.value = currentSort;
+      sortOrderBtn.textContent = currentOrder === 'asc' ? '↑' : '↓';
+      sortOrderBtn.classList.toggle('active', currentOrder === 'desc');
+    }
+
+    // ===== HANDLE FILTER CHANGE =====
     filterBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.filter === currentFilter);
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter;
+        if (filter === currentFilter) return;
+        currentFilter = filter;
+        updateFilterUI();
+        loadTodos();
+      });
     });
-  }
 
-  function updateSortUI() {
-    sortField.value = currentSort;
-    sortOrderBtn.textContent = currentOrder === 'asc' ? '↑' : '↓';
-    sortOrderBtn.classList.toggle('active', currentOrder === 'desc');
-  }
-
-  // ===== HANDLE FILTER CHANGE =====
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const filter = btn.dataset.filter;
-      if (filter === currentFilter) return;
-      currentFilter = filter;
-      updateFilterUI();
+    // ===== HANDLE SORT CHANGE =====
+    sortField.addEventListener('change', () => {
+      const newSort = sortField.value;
+      if (newSort === currentSort) return;
+      currentSort = newSort;
+      updateSortUI();
       loadTodos();
     });
-  });
 
-  // ===== HANDLE SORT CHANGE =====
-  sortField.addEventListener('change', () => {
-    const newSort = sortField.value;
-    if (newSort === currentSort) return;
-    currentSort = newSort;
+    sortOrderBtn.addEventListener('click', () => {
+      currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+      updateSortUI();
+      loadTodos();
+    });
+
+    // ===== ADD FORM =====
+    addForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = newTitle.value.trim();
+      if (!title) {
+        showToast('Введите текст задачи', 'error');
+        return;
+      }
+      if (title.length > 255) {
+        showToast('Максимум 255 символов', 'error');
+        return;
+      }
+      try {
+        await createTodo(title);
+        newTitle.value = '';
+        newTitle.focus();
+        await loadTodos();
+        showToast('Задача добавлена', 'success');
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    });
+
+    // ===== INIT =====
+    currentFilter = 'all';
+    currentSort = 'created';
+    currentOrder = 'asc';
+    updateFilterUI();
     updateSortUI();
     loadTodos();
-  });
 
-  sortOrderBtn.addEventListener('click', () => {
-    currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-    updateSortUI();
-    loadTodos();
-  });
+    // Периодическое обновление статистики (каждые 10 сек)
+    setInterval(async () => {
+      try {
+        const stats = await fetchStats();
+        updateStats(stats.total, stats.completed, stats.pending);
+      } catch (_) { /* игнорируем */ }
+    }, 10000);
 
-  // ===== ADD FORM =====
-  addForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = newTitle.value.trim();
-    if (!title) {
-      showToast('Введите текст задачи', 'error');
-      return;
-    }
-    if (title.length > 255) {
-      showToast('Максимум 255 символов', 'error');
-      return;
-    }
-    try {
-      await createTodo(title);
-      newTitle.value = '';
-      newTitle.focus();
-      // После добавления перезагружаем список
-      await loadTodos();
-      showToast('Задача добавлена', 'success');
-    } catch (e) {
-      showToast(e.message, 'error');
-    }
-  });
-
-  // ===== INIT =====
-  // Устанавливаем начальные значения
-  currentFilter = 'all';
-  currentSort = 'created';
-  currentOrder = 'asc';
-  updateFilterUI();
-  updateSortUI();
-  loadTodos();
-
-  // Периодическое обновление статистики (каждые 10 сек)
-  setInterval(async () => {
-    try {
-      const stats = await fetchStats();
-      updateStats(stats.total, stats.completed, stats.pending);
-    } catch (_) { /* игнорируем */ }
-  }, 10000);
+  })();
 </script>
 </body>
 </html>
