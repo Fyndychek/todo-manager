@@ -3,14 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>✨ My Todos</title>
+  <title>✨ Todo Pro</title>
   <style>
-    /* ===== RESET & GLOBAL ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    /* ===== GLOBAL ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: #0b0e14;
@@ -20,10 +16,7 @@
       justify-content: center;
       padding: 2rem 1rem;
     }
-    .app {
-      max-width: 700px;
-      width: 100%;
-    }
+    .app { max-width: 800px; width: 100%; }
 
     /* ===== HEADER ===== */
     .header {
@@ -62,11 +55,64 @@
       color: #a78bfa;
     }
 
+    /* ===== CONTROLS ===== */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      background: #121820;
+      padding: 1rem 1.2rem;
+      border-radius: 16px;
+      border: 1px solid #1e2430;
+      align-items: center;
+    }
+    .controls-group {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls-group label {
+      font-size: 0.85rem;
+      color: #8b96aa;
+      margin-right: 0.3rem;
+    }
+    .controls select, .controls button {
+      background: #1e2430;
+      color: #e4e9f2;
+      border: 1px solid #2a3140;
+      padding: 0.4rem 0.8rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .controls select:hover, .controls button:hover {
+      border-color: #7c3aed;
+      background: #252d3d;
+    }
+    .controls select:focus {
+      outline: none;
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 2px rgba(124,58,237,0.2);
+    }
+    .reset-btn {
+      margin-left: auto;
+      background: transparent;
+      border-color: #4a3a5a;
+      color: #a78bfa;
+    }
+    .reset-btn:hover {
+      background: #2a1f3a;
+      border-color: #a78bfa;
+    }
+
     /* ===== ADD FORM ===== */
     .add-form {
       display: flex;
       gap: 0.5rem;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
     .add-form input {
       flex: 1;
@@ -101,9 +147,7 @@
       transform: scale(1.02);
       box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
     }
-    .add-form button:active {
-      transform: scale(0.97);
-    }
+    .add-form button:active { transform: scale(0.97); }
 
     /* ===== TODO LIST ===== */
     .todo-list {
@@ -158,13 +202,16 @@
       background: #2a1f2a;
       color: #f87171;
     }
-
-    /* ===== EMPTY STATE ===== */
     .empty-state {
       text-align: center;
       padding: 3rem 0;
       color: #5b657a;
       font-size: 1.1rem;
+    }
+    .loading {
+      text-align: center;
+      padding: 2rem 0;
+      color: #8b96aa;
     }
 
     /* ===== TOAST ===== */
@@ -187,12 +234,8 @@
       animation: slideIn 0.3s ease;
       font-size: 0.95rem;
     }
-    .toast.error {
-      border-left-color: #f87171;
-    }
-    .toast.success {
-      border-left-color: #34d399;
-    }
+    .toast.error { border-left-color: #f87171; }
+    .toast.success { border-left-color: #34d399; }
 
     /* ===== ANIMATIONS ===== */
     @keyframes fadeIn {
@@ -205,9 +248,12 @@
     }
 
     /* ===== RESPONSIVE ===== */
-    @media (max-width: 500px) {
+    @media (max-width: 600px) {
       .header { flex-direction: column; align-items: stretch; }
       .stats-badge { justify-content: center; }
+      .controls { flex-direction: column; align-items: stretch; }
+      .controls-group { justify-content: center; }
+      .reset-btn { margin-left: 0; }
       .add-form { flex-wrap: wrap; }
       .add-form button { width: 100%; }
     }
@@ -216,7 +262,7 @@
 <body>
 <div class="app">
   <header class="header">
-    <div class="logo">✓ <span>Todo</span></div>
+    <div class="logo">✓ <span>Todo Pro</span></div>
     <div class="stats-badge" id="stats">
       Всего: <span id="total">0</span>
       Выполнено: <span id="completed">0</span>
@@ -224,33 +270,70 @@
     </div>
   </header>
 
+  <!-- Панель управления -->
+  <div class="controls">
+    <div class="controls-group">
+      <label>Фильтр:</label>
+      <select id="filterSelect">
+        <option value="all">Все</option>
+        <option value="active">Активные</option>
+        <option value="completed">Выполненные</option>
+      </select>
+    </div>
+    <div class="controls-group">
+      <label>Сортировка:</label>
+      <select id="sortSelect">
+        <option value="created">По дате</option>
+        <option value="id">По ID</option>
+        <option value="completed">По статусу</option>
+      </select>
+    </div>
+    <div class="controls-group">
+      <label>Порядок:</label>
+      <select id="orderSelect">
+        <option value="asc">По возрастанию</option>
+        <option value="desc">По убыванию</option>
+      </select>
+    </div>
+    <button class="reset-btn" id="resetFiltersBtn">Сбросить</button>
+  </div>
+
+  <!-- Форма добавления -->
   <form class="add-form" id="addForm">
     <input type="text" id="newTitle" placeholder="Что нужно сделать?" maxlength="255" autofocus />
     <button type="submit">Добавить</button>
   </form>
 
+  <!-- Список задач -->
   <div class="todo-list" id="todoList">
-    <div class="empty-state">✨ Нет задач — добавьте первую!</div>
+    <div class="loading">⏳ Загрузка...</div>
   </div>
 </div>
 
-<!-- Toast-контейнер -->
+<!-- Контейнер уведомлений -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-  // ===== API BASE =====
-  const API_BASE = window.location.origin; // используем тот же хост
+  // ===== API =====
+  const API_BASE = window.location.origin;
 
-  // ===== STATE =====
-  let todos = [];
-
-  // ===== DOM REFS =====
+  // ===== DOM =====
   const todoList = document.getElementById('todoList');
   const addForm = document.getElementById('addForm');
   const newTitle = document.getElementById('newTitle');
   const totalSpan = document.getElementById('total');
   const completedSpan = document.getElementById('completed');
   const pendingSpan = document.getElementById('pending');
+  const filterSelect = document.getElementById('filterSelect');
+  const sortSelect = document.getElementById('sortSelect');
+  const orderSelect = document.getElementById('orderSelect');
+  const resetBtn = document.getElementById('resetFiltersBtn');
+
+  // ===== STATE =====
+  let todos = [];
+  let currentFilter = 'all';
+  let currentSort = 'created';
+  let currentOrder = 'asc';
 
   // ===== TOAST =====
   function showToast(message, type = 'info') {
@@ -267,10 +350,24 @@
   }
 
   // ===== FETCH HELPERS =====
-  async function fetchTodos() {
-    const res = await fetch(`${API_BASE}/todos`);
-    if (!res.ok) throw new Error('Не удалось загрузить задачи');
-    return res.json();
+
+  // Получение списка с параметрами (POST /todos)
+  async function fetchTodos(filter, sort, order) {
+    const body = {
+      filter: filter || 'all',
+      sort: sort || 'created',
+      order: order || 'asc'
+    };
+    const res = await fetch(`${API_BASE}/todos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Ошибка загрузки');
+    }
+    return res.json(); // ожидаем массив задач
   }
 
   async function createTodo(title) {
@@ -316,7 +413,7 @@
 
   // ===== RENDER =====
   function renderTodos() {
-    if (todos.length === 0) {
+    if (!todos || todos.length === 0) {
       todoList.innerHTML = `<div class="empty-state">✨ Нет задач — добавьте первую!</div>`;
       updateStats(0, 0, 0);
       return;
@@ -344,11 +441,8 @@
       check.addEventListener('change', async () => {
         try {
           const updated = await updateTodo(id, { completed: check.checked });
-          // обновим локально
-          const idx = todos.findIndex(t => t.id === id);
-          if (idx !== -1) todos[idx] = updated;
-          renderTodos();
-          updateStatsFromTodos();
+          // обновим локально (перезагрузим список полностью, чтобы сохранить фильтр/сортировку)
+          await loadTodos();
           showToast(`Задача ${check.checked ? 'выполнена' : 'восстановлена'}`, 'success');
         } catch (e) {
           showToast(e.message, 'error');
@@ -360,9 +454,7 @@
         if (!confirm('Удалить задачу?')) return;
         try {
           await deleteTodo(id);
-          todos = todos.filter(t => t.id !== id);
-          renderTodos();
-          updateStatsFromTodos();
+          await loadTodos();
           showToast('Задача удалена', 'success');
         } catch (e) {
           showToast(e.message, 'error');
@@ -370,6 +462,7 @@
       });
     });
 
+    // Обновляем статистику из полученных данных (но лучше дополнительно запросить /stats)
     updateStatsFromTodos();
   }
 
@@ -386,7 +479,6 @@
     pendingSpan.textContent = pending;
   }
 
-  // простая защита от XSS
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -394,16 +486,45 @@
   }
 
   // ===== LOAD DATA =====
-  async function loadAll() {
+  async function loadTodos() {
     try {
-      todos = await fetchTodos();
+      todoList.innerHTML = `<div class="loading">⏳ Загрузка...</div>`;
+      todos = await fetchTodos(currentFilter, currentSort, currentOrder);
       renderTodos();
+      // Дополнительно обновить статистику через отдельный запрос (для точности)
+      try {
+        const stats = await fetchStats();
+        updateStats(stats.total, stats.completed, stats.pending);
+      } catch (_) { /* игнорируем, уже есть из списка */ }
     } catch (e) {
+      todoList.innerHTML = `<div class="empty-state">❌ Ошибка загрузки: ${e.message}</div>`;
       showToast(e.message, 'error');
     }
   }
 
-  // ===== ADD FORM =====
+  // ===== HANDLERS =====
+
+  // Изменение фильтра/сортировки – перезагружаем список
+  function onFilterOrSortChange() {
+    currentFilter = filterSelect.value;
+    currentSort = sortSelect.value;
+    currentOrder = orderSelect.value;
+    loadTodos();
+  }
+
+  filterSelect.addEventListener('change', onFilterOrSortChange);
+  sortSelect.addEventListener('change', onFilterOrSortChange);
+  orderSelect.addEventListener('change', onFilterOrSortChange);
+
+  // Сброс фильтров
+  resetBtn.addEventListener('click', () => {
+    filterSelect.value = 'all';
+    sortSelect.value = 'created';
+    orderSelect.value = 'asc';
+    onFilterOrSortChange();
+  });
+
+  // Добавление задачи
   addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const title = newTitle.value.trim();
@@ -416,27 +537,26 @@
       return;
     }
     try {
-      const newTodo = await createTodo(title);
-      todos.push(newTodo);
-      renderTodos();
+      await createTodo(title);
       newTitle.value = '';
       newTitle.focus();
+      await loadTodos();
       showToast('Задача добавлена', 'success');
     } catch (e) {
       showToast(e.message, 'error');
     }
   });
 
-  // ===== START =====
-  loadAll();
+  // ===== INIT =====
+  loadTodos();
 
-  // обновляем статистику каждые 10 секунд (на случай изменений извне)
+  // Автообновление статистики каждые 15 секунд
   setInterval(async () => {
     try {
       const stats = await fetchStats();
       updateStats(stats.total, stats.completed, stats.pending);
     } catch (_) { /* игнорируем */ }
-  }, 10000);
+  }, 15000);
 </script>
 </body>
 </html>

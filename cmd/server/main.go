@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,6 +29,12 @@ type Todo struct {
 type UpdateTodoRequest struct {
 	Title     *string `json:"title"`
 	Completed *bool   `json:"completed"`
+}
+
+type SortGet struct {
+	Filter *string `json:"filter"`
+	Sort   *string `json:"sort"`
+	Order  *string `json:"order"`
 }
 
 var (
@@ -106,6 +113,7 @@ func main() {
 }
 
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Добавляем заголовки CORS
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -133,11 +141,91 @@ func respondError(w http.ResponseWriter, message string, status int) {
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 
+	var param SortGet
+	var tfilter = []Todo{}
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	if err := json.NewDecoder(r.Body).Decode(&param); err != nil {
+		log.Printf("Decode error: %v", err)
+		respondError(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
 	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
+
+	if param.Filter != nil {
+		*param.Filter = strings.TrimSpace(*param.Filter)
+		if len(*param.Filter) > 255 {
+			log.Printf("too long request")
+			respondError(w, "too long request(max 255)", http.StatusBadRequest)
+			return
+		}
+		switch *param.Filter {
+		case "all":
+			tfilter = todos
+
+		case "completed":
+			for _, t := range todos {
+				if t.Completed == true {
+					tfilter = append(tfilter, t)
+				}
+			}
+		case "active":
+			for _, t := range todos {
+				if t.Completed == false {
+					tfilter = append(tfilter, t)
+				}
+			}
+		default:
+			tfilter = todos
+		}
+	} else {
+		tfilter = todos
+	}
+
+	if param.Sort != nil {
+		*param.Sort = strings.TrimSpace(*param.Sort)
+		if len(*param.Sort) > 255 {
+			log.Printf("too long request")
+			respondError(w, "too long request(max 255)", http.StatusBadRequest)
+			return
+		}
+		switch *param.Sort {
+		case "id":
+			sort.Slice(tfilter, func(i, j int) bool {
+				if *param.Order == "desc" {
+					return tfilter[i].Title > tfilter[j].Title
+				}
+				return tfilter[i].Title < tfilter[j].Title
+			})
+		case "completed":
+			sort.Slice(tfilter, func(i, j int) bool {
+				if *param.Order == "desc" {
+					return tfilter[i].Completed && !tfilter[j].Completed
+				}
+				return tfilter[i].Completed && tfilter[j].Completed
+			})
+		case "created":
+			sort.Slice(tfilter, func(i, j int) bool {
+				if *param.Order == "desc" {
+					return tfilter[i].Created.After(tfilter[j].Created)
+				}
+				return tfilter[i].Created.Before(tfilter[j].Created)
+			})
+		default:
+			sort.Slice(tfilter, func(i, j int) bool {
+				if *param.Order == "desc" {
+					return tfilter[i].Title > tfilter[j].Title
+				}
+				return tfilter[i].Title < tfilter[j].Title
+			})
+
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(todos)
+	json.NewEncoder(w).Encode(tfilter)
 }
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
