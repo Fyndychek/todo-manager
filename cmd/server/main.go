@@ -143,6 +143,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 	var param SortGet
 	var tfilter = []Todo{}
+	var defaultOrder = "asc"
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&param); err != nil {
 		log.Printf("Decode error: %v", err)
@@ -153,7 +154,9 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
-
+	if param.Order == nil {
+		param.Order = &defaultOrder
+	}
 	if param.Filter != nil {
 		*param.Filter = strings.TrimSpace(*param.Filter)
 		if len(*param.Filter) > 255 {
@@ -195,6 +198,13 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 		case "id":
 			sort.Slice(tfilter, func(i, j int) bool {
 				if *param.Order == "desc" {
+					return tfilter[i].ID > tfilter[j].ID
+				}
+				return tfilter[i].ID < tfilter[j].ID
+			})
+		case "title":
+			sort.Slice(tfilter, func(i, j int) bool {
+				if *param.Order == "desc" {
 					return tfilter[i].Title > tfilter[j].Title
 				}
 				return tfilter[i].Title < tfilter[j].Title
@@ -204,7 +214,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 				if *param.Order == "desc" {
 					return tfilter[i].Completed && !tfilter[j].Completed
 				}
-				return tfilter[i].Completed && tfilter[j].Completed
+				return !tfilter[i].Completed && tfilter[j].Completed
 			})
 		case "created":
 			sort.Slice(tfilter, func(i, j int) bool {
