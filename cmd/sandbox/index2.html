@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>✨ Todo Pro</title>
+  <title>✨ NeiroSlop · Умный список</title>
   <style>
-    /* ===== GLOBAL ===== */
+    /* ===== RESET & GLOBAL ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       background: #0b0e14;
       color: #e4e9f2;
       min-height: 100vh;
@@ -16,16 +16,19 @@
       justify-content: center;
       padding: 2rem 1rem;
     }
-    .app { max-width: 800px; width: 100%; }
+    .app {
+      max-width: 820px;
+      width: 100%;
+    }
 
     /* ===== HEADER ===== */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
     .logo {
       display: flex;
@@ -37,76 +40,76 @@
     }
     .logo span {
       background: linear-gradient(135deg, #a78bfa, #7c3aed);
-      padding: 0.2rem 0.6rem;
-      border-radius: 12px;
+      padding: 0.2rem 0.8rem;
+      border-radius: 14px;
       color: #fff;
     }
     .stats-badge {
       background: #1e2430;
-      padding: 0.4rem 1rem;
+      padding: 0.4rem 1.2rem;
       border-radius: 30px;
       font-size: 0.9rem;
       display: flex;
-      gap: 1rem;
+      gap: 1.2rem;
       border: 1px solid #2a3140;
     }
-    .stats-badge span {
-      font-weight: 600;
-      color: #a78bfa;
-    }
+    .stats-badge span { font-weight: 600; color: #a78bfa; }
 
-    /* ===== CONTROLS ===== */
-    .controls {
+    /* ===== TOOLBAR (фильтр + сортировка) ===== */
+    .toolbar {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: 0.75rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
       background: #121820;
-      padding: 1rem 1.2rem;
-      border-radius: 16px;
+      padding: 0.7rem 1rem;
+      border-radius: 20px;
       border: 1px solid #1e2430;
-      align-items: center;
     }
-    .controls-group {
+    .toolbar-group {
       display: flex;
-      gap: 0.4rem;
       align-items: center;
+      gap: 0.4rem;
       flex-wrap: wrap;
     }
-    .controls-group label {
-      font-size: 0.85rem;
-      color: #8b96aa;
-      margin-right: 0.3rem;
+    .toolbar-label {
+      font-size: 0.8rem;
+      color: #6b7a8f;
+      margin-right: 0.2rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
     }
-    .controls select, .controls button {
+    .filter-btn, .sort-btn, .order-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #8b9ab0;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover, .sort-btn:hover, .order-btn:hover {
       background: #1e2430;
       color: #e4e9f2;
+    }
+    .filter-btn.active, .sort-btn.active, .order-btn.active {
+      background: #7c3aed;
+      color: #fff;
+      border-color: #7c3aed;
+    }
+    .sort-select {
+      background: #1e2430;
       border: 1px solid #2a3140;
-      padding: 0.4rem 0.8rem;
-      border-radius: 10px;
-      font-size: 0.9rem;
+      color: #e4e9f2;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
       cursor: pointer;
-      transition: all 0.15s;
-    }
-    .controls select:hover, .controls button:hover {
-      border-color: #7c3aed;
-      background: #252d3d;
-    }
-    .controls select:focus {
       outline: none;
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 2px rgba(124,58,237,0.2);
     }
-    .reset-btn {
-      margin-left: auto;
-      background: transparent;
-      border-color: #4a3a5a;
-      color: #a78bfa;
-    }
-    .reset-btn:hover {
-      background: #2a1f3a;
-      border-color: #a78bfa;
-    }
+    .sort-select:focus { border-color: #7c3aed; }
 
     /* ===== ADD FORM ===== */
     .add-form {
@@ -128,9 +131,7 @@
       outline: none;
       border-color: #7c3aed;
     }
-    .add-form input::placeholder {
-      color: #5b657a;
-    }
+    .add-form input::placeholder { color: #5b657a; }
     .add-form button {
       padding: 0.9rem 2rem;
       background: linear-gradient(135deg, #7c3aed, #a78bfa);
@@ -175,8 +176,7 @@
       color: #5b657a;
     }
     .todo-item .todo-check {
-      width: 24px;
-      height: 24px;
+      width: 24px; height: 24px;
       accent-color: #7c3aed;
       cursor: pointer;
       flex-shrink: 0;
@@ -202,16 +202,19 @@
       background: #2a1f2a;
       color: #f87171;
     }
+
+    /* ===== EMPTY STATE ===== */
     .empty-state {
       text-align: center;
       padding: 3rem 0;
       color: #5b657a;
       font-size: 1.1rem;
     }
+    /* ===== LOADING ===== */
     .loading {
       text-align: center;
       padding: 2rem 0;
-      color: #8b96aa;
+      color: #5b657a;
     }
 
     /* ===== TOAST ===== */
@@ -251,9 +254,8 @@
     @media (max-width: 600px) {
       .header { flex-direction: column; align-items: stretch; }
       .stats-badge { justify-content: center; }
-      .controls { flex-direction: column; align-items: stretch; }
-      .controls-group { justify-content: center; }
-      .reset-btn { margin-left: 0; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar-group { justify-content: center; }
       .add-form { flex-wrap: wrap; }
       .add-form button { width: 100%; }
     }
@@ -262,7 +264,7 @@
 <body>
 <div class="app">
   <header class="header">
-    <div class="logo">✓ <span>Todo Pro</span></div>
+    <div class="logo">✓ <span>NeiroSlop</span></div>
     <div class="stats-badge" id="stats">
       Всего: <span id="total">0</span>
       Выполнено: <span id="completed">0</span>
@@ -270,70 +272,60 @@
     </div>
   </header>
 
-  <!-- Панель управления -->
-  <div class="controls">
-    <div class="controls-group">
-      <label>Фильтр:</label>
-      <select id="filterSelect">
-        <option value="all">Все</option>
-        <option value="active">Активные</option>
-        <option value="completed">Выполненные</option>
-      </select>
+  <!-- Панель фильтрации и сортировки -->
+  <div class="toolbar" id="toolbar">
+    <div class="toolbar-group">
+      <span class="toolbar-label">Фильтр:</span>
+      <button class="filter-btn active" data-filter="all">Все</button>
+      <button class="filter-btn" data-filter="active">Активные</button>
+      <button class="filter-btn" data-filter="completed">Выполненные</button>
     </div>
-    <div class="controls-group">
-      <label>Сортировка:</label>
-      <select id="sortSelect">
-        <option value="created">По дате</option>
-        <option value="id">По ID</option>
-        <option value="completed">По статусу</option>
+    <div class="toolbar-group">
+      <span class="toolbar-label">Сортировка:</span>
+      <select class="sort-select" id="sortSelect">
+        <option value="created">Дате</option>
+        <option value="title">Названию</option>
+        <option value="completed">Статусу</option>
+        <option value="id">ID</option>
       </select>
+      <button class="order-btn active" data-order="asc">↑</button>
+      <button class="order-btn" data-order="desc">↓</button>
     </div>
-    <div class="controls-group">
-      <label>Порядок:</label>
-      <select id="orderSelect">
-        <option value="asc">По возрастанию</option>
-        <option value="desc">По убыванию</option>
-      </select>
-    </div>
-    <button class="reset-btn" id="resetFiltersBtn">Сбросить</button>
   </div>
 
-  <!-- Форма добавления -->
   <form class="add-form" id="addForm">
     <input type="text" id="newTitle" placeholder="Что нужно сделать?" maxlength="255" autofocus />
     <button type="submit">Добавить</button>
   </form>
 
-  <!-- Список задач -->
   <div class="todo-list" id="todoList">
-    <div class="loading">⏳ Загрузка...</div>
+    <div class="empty-state">✨ Нет задач — добавьте первую!</div>
   </div>
 </div>
 
-<!-- Контейнер уведомлений -->
+<!-- Toast-контейнер -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-  // ===== API =====
+  // ===== API BASE =====
   const API_BASE = window.location.origin;
-
-  // ===== DOM =====
-  const todoList = document.getElementById('todoList');
-  const addForm = document.getElementById('addForm');
-  const newTitle = document.getElementById('newTitle');
-  const totalSpan = document.getElementById('total');
-  const completedSpan = document.getElementById('completed');
-  const pendingSpan = document.getElementById('pending');
-  const filterSelect = document.getElementById('filterSelect');
-  const sortSelect = document.getElementById('sortSelect');
-  const orderSelect = document.getElementById('orderSelect');
-  const resetBtn = document.getElementById('resetFiltersBtn');
 
   // ===== STATE =====
   let todos = [];
   let currentFilter = 'all';
   let currentSort = 'created';
   let currentOrder = 'asc';
+
+  // ===== DOM REFS =====
+  const todoList = document.getElementById('todoList');
+  const addForm = document.getElementById('addForm');
+  const newTitle = document.getElementById('newTitle');
+  const totalSpan = document.getElementById('total');
+  const completedSpan = document.getElementById('completed');
+  const pendingSpan = document.getElementById('pending');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const sortSelect = document.getElementById('sortSelect');
+  const orderBtns = document.querySelectorAll('.order-btn');
 
   // ===== TOAST =====
   function showToast(message, type = 'info') {
@@ -350,24 +342,22 @@
   }
 
   // ===== FETCH HELPERS =====
-
-  // Получение списка с параметрами (POST /todos)
   async function fetchTodos(filter, sort, order) {
     const body = {
-      filter: filter || 'all',
-      sort: sort || 'created',
-      order: order || 'asc'
+      Filter: filter === 'all' ? null : filter,
+      Sort: sort,
+      Order: order
     };
     const res = await fetch(`${API_BASE}/todos`, {
-      method: 'POST',
+      method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Ошибка загрузки');
+      throw new Error(err.error || 'Ошибка загрузки задач');
     }
-    return res.json(); // ожидаем массив задач
+    return res.json();
   }
 
   async function createTodo(title) {
@@ -413,7 +403,7 @@
 
   // ===== RENDER =====
   function renderTodos() {
-    if (!todos || todos.length === 0) {
+    if (todos.length === 0) {
       todoList.innerHTML = `<div class="empty-state">✨ Нет задач — добавьте первую!</div>`;
       updateStats(0, 0, 0);
       return;
@@ -441,8 +431,11 @@
       check.addEventListener('change', async () => {
         try {
           const updated = await updateTodo(id, { completed: check.checked });
-          // обновим локально (перезагрузим список полностью, чтобы сохранить фильтр/сортировку)
-          await loadTodos();
+          // обновим локально
+          const idx = todos.findIndex(t => t.id === id);
+          if (idx !== -1) todos[idx] = updated;
+          // перерисовываем, чтобы сохранить порядок (сортировка уже применена на сервере)
+          await refreshTodos();
           showToast(`Задача ${check.checked ? 'выполнена' : 'восстановлена'}`, 'success');
         } catch (e) {
           showToast(e.message, 'error');
@@ -454,15 +447,13 @@
         if (!confirm('Удалить задачу?')) return;
         try {
           await deleteTodo(id);
-          await loadTodos();
+          await refreshTodos();
           showToast('Задача удалена', 'success');
         } catch (e) {
           showToast(e.message, 'error');
         }
       });
     });
-
-    // Обновляем статистику из полученных данных (но лучше дополнительно запросить /stats)
     updateStatsFromTodos();
   }
 
@@ -485,46 +476,72 @@
     return div.innerHTML;
   }
 
-  // ===== LOAD DATA =====
-  async function loadTodos() {
+  // ===== LOAD DATA WITH CURRENT PARAMS =====
+  async function refreshTodos() {
     try {
-      todoList.innerHTML = `<div class="loading">⏳ Загрузка...</div>`;
-      todos = await fetchTodos(currentFilter, currentSort, currentOrder);
+      const data = await fetchTodos(currentFilter, currentSort, currentOrder);
+      todos = data;
       renderTodos();
-      // Дополнительно обновить статистику через отдельный запрос (для точности)
-      try {
-        const stats = await fetchStats();
-        updateStats(stats.total, stats.completed, stats.pending);
-      } catch (_) { /* игнорируем, уже есть из списка */ }
     } catch (e) {
-      todoList.innerHTML = `<div class="empty-state">❌ Ошибка загрузки: ${e.message}</div>`;
       showToast(e.message, 'error');
     }
   }
 
-  // ===== HANDLERS =====
-
-  // Изменение фильтра/сортировки – перезагружаем список
-  function onFilterOrSortChange() {
-    currentFilter = filterSelect.value;
-    currentSort = sortSelect.value;
-    currentOrder = orderSelect.value;
-    loadTodos();
+  // ===== UPDATE STATS PERIODICALLY =====
+  async function refreshStats() {
+    try {
+      const stats = await fetchStats();
+      updateStats(stats.total, stats.completed, stats.pending);
+    } catch (_) { /* ignore */ }
   }
 
-  filterSelect.addEventListener('change', onFilterOrSortChange);
-  sortSelect.addEventListener('change', onFilterOrSortChange);
-  orderSelect.addEventListener('change', onFilterOrSortChange);
+  // ===== APPLY FILTER/SORT/ORDER =====
+  function applySettings() {
+    // обновляем активные классы кнопок фильтра
+    filterBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === currentFilter);
+    });
+    // выбираем сортировку в селекте
+    sortSelect.value = currentSort;
+    // обновляем активные кнопки порядка
+    orderBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.order === currentOrder);
+    });
+    // сохраняем в URL hash (для закладок)
+    window.location.hash = `filter=${currentFilter}&sort=${currentSort}&order=${currentOrder}`;
+    // загружаем данные
+    refreshTodos();
+  }
 
-  // Сброс фильтров
-  resetBtn.addEventListener('click', () => {
-    filterSelect.value = 'all';
-    sortSelect.value = 'created';
-    orderSelect.value = 'asc';
-    onFilterOrSortChange();
+  // ===== INIT =====
+  function initFromHash() {
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    if (params.has('filter')) currentFilter = params.get('filter');
+    if (params.has('sort')) currentSort = params.get('sort');
+    if (params.has('order')) currentOrder = params.get('order');
+  }
+
+  // ===== EVENTS =====
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFilter = btn.dataset.filter;
+      applySettings();
+    });
   });
 
-  // Добавление задачи
+  sortSelect.addEventListener('change', () => {
+    currentSort = sortSelect.value;
+    applySettings();
+  });
+
+  orderBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentOrder = btn.dataset.order;
+      applySettings();
+    });
+  });
+
   addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const title = newTitle.value.trim();
@@ -537,26 +554,31 @@
       return;
     }
     try {
-      await createTodo(title);
+      const newTodo = await createTodo(title);
+      // после создания обновляем список (с текущими фильтрами/сортировкой)
+      await refreshTodos();
+      // обновляем статистику
+      refreshStats();
       newTitle.value = '';
       newTitle.focus();
-      await loadTodos();
       showToast('Задача добавлена', 'success');
     } catch (e) {
       showToast(e.message, 'error');
     }
   });
 
-  // ===== INIT =====
-  loadTodos();
+  // ===== START =====
+  initFromHash();
+  applySettings(); // загрузит данные и применит настройки
 
-  // Автообновление статистики каждые 15 секунд
-  setInterval(async () => {
-    try {
-      const stats = await fetchStats();
-      updateStats(stats.total, stats.completed, stats.pending);
-    } catch (_) { /* игнорируем */ }
-  }, 15000);
+  // обновляем статистику каждые 10 секунд
+  setInterval(refreshStats, 10000);
+
+  // слушаем изменение hash (если пользователь нажимает назад/вперёд)
+  window.addEventListener('hashchange', () => {
+    initFromHash();
+    applySettings();
+  });
 </script>
 </body>
 </html>

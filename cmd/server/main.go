@@ -141,32 +141,32 @@ func respondError(w http.ResponseWriter, message string, status int) {
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 
-	var param SortGet
-	var tfilter = []Todo{}
-	var defaultOrder = "asc"
-	r.Body = http.MaxBytesReader(w, r.Body, 1024)
-	if err := json.NewDecoder(r.Body).Decode(&param); err != nil {
-		log.Printf("Decode error: %v", err)
-		respondError(w, "Invalid request", http.StatusBadRequest)
-		return
+	var tfilter []Todo
+	filter := r.URL.Query().Get("filter")
+	sortby := r.URL.Query().Get("sort")
+	order := r.URL.Query().Get("order")
+	if filter == "" {
+		filter = "all"
+	}
+	if sortby == "" {
+		sortby = "created"
+	}
+	if order == "" {
+		order = "asc"
 	}
 
 	//работа с массивом
 	mu.Lock()
 	defer mu.Unlock()
-	if param.Order == nil {
-		param.Order = &defaultOrder
-	}
-	if param.Filter != nil {
-		*param.Filter = strings.TrimSpace(*param.Filter)
-		if len(*param.Filter) > 255 {
+	if filter != "" {
+		if len(filter) > 255 {
 			log.Printf("too long request")
 			respondError(w, "too long request(max 255)", http.StatusBadRequest)
 			return
 		}
-		switch *param.Filter {
+		switch filter {
 		case "all":
-			tfilter = todos
+			tfilter = append([]Todo{}, todos...)
 
 		case "completed":
 			for _, t := range todos {
@@ -181,51 +181,50 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		default:
-			tfilter = todos
+			tfilter = append([]Todo{}, todos...)
 		}
 	} else {
-		tfilter = todos
+		tfilter = append([]Todo{}, todos...)
 	}
 
-	if param.Sort != nil {
-		*param.Sort = strings.TrimSpace(*param.Sort)
-		if len(*param.Sort) > 255 {
+	if sortby != "" {
+		if len(sortby) > 255 {
 			log.Printf("too long request")
 			respondError(w, "too long request(max 255)", http.StatusBadRequest)
 			return
 		}
-		switch *param.Sort {
+		switch sortby {
 		case "id":
 			sort.Slice(tfilter, func(i, j int) bool {
-				if *param.Order == "desc" {
+				if order == "desc" {
 					return tfilter[i].ID > tfilter[j].ID
 				}
 				return tfilter[i].ID < tfilter[j].ID
 			})
 		case "title":
 			sort.Slice(tfilter, func(i, j int) bool {
-				if *param.Order == "desc" {
+				if order == "desc" {
 					return tfilter[i].Title > tfilter[j].Title
 				}
 				return tfilter[i].Title < tfilter[j].Title
 			})
 		case "completed":
 			sort.Slice(tfilter, func(i, j int) bool {
-				if *param.Order == "desc" {
+				if order == "desc" {
 					return tfilter[i].Completed && !tfilter[j].Completed
 				}
 				return !tfilter[i].Completed && tfilter[j].Completed
 			})
 		case "created":
 			sort.Slice(tfilter, func(i, j int) bool {
-				if *param.Order == "desc" {
+				if order == "desc" {
 					return tfilter[i].Created.After(tfilter[j].Created)
 				}
 				return tfilter[i].Created.Before(tfilter[j].Created)
 			})
 		default:
 			sort.Slice(tfilter, func(i, j int) bool {
-				if *param.Order == "desc" {
+				if order == "desc" {
 					return tfilter[i].Title > tfilter[j].Title
 				}
 				return tfilter[i].Title < tfilter[j].Title
