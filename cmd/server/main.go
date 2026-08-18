@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/Fyndychek/todo-manager/internal/handlers"
+	"github.com/Fyndychek/todo-manager/internal/storage"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -48,13 +49,16 @@ var (
 
 func main() {
 
-	db, errdb := sql.Open("sqlite3", "store.db")
-	if errdb != nil {
-		panic(errdb)
+	dbFile := os.Getenv("DB_FILE")
+	if dbFile == "" {
+		dbFile = "todos.db"
 	}
-	defer db.Close()
-	port := 8080
+	_, err := storage.NewDatabase(dbFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	port := 8080
 	if p := os.Getenv("PORT"); p != "" {
 		if v, err := strconv.Atoi(p); err == nil {
 			port = v
