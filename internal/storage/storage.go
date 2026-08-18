@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type todo struct {
+type DBtodo struct {
 	Title     string
 	Completed bool
 	Created   time.Time
@@ -37,4 +37,9 @@ func NewDatabase(dbFile string) (*sql.DB, error) {
 	}
 
 	return newDB, nil
+}
+
+func AddTodo(t DBtodo, db *sql.DB) error {
+
+	return nil
 }

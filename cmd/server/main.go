@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -45,15 +46,17 @@ var (
 	todos   = []Todo{}
 	mu      sync.Mutex
 	counter = 0
+	db      *sql.DB
 )
 
 func main() {
 
+	var err error
 	dbFile := os.Getenv("DB_FILE")
 	if dbFile == "" {
 		dbFile = "todos.db"
 	}
-	_, err := storage.NewDatabase(dbFile)
+	db, err = storage.NewDatabase(dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -121,6 +124,10 @@ func main() {
 		log.Fatal("Server forced to shutdown:", err)
 	}
 	log.Println("Server exited gracefully")
+
+	if err := db.Close(); err != nil {
+		log.Printf("Error closing DB: %v", err)
+	}
 
 }
 
@@ -251,7 +258,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 
-	var t Todo
+	var t storage.DBtodo
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		log.Printf("Decode error: %v", err)
@@ -272,7 +279,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//работа с массивом
-	mu.Lock()
+	/*mu.Lock()
 	defer mu.Unlock()
 	if len(todos) > 255 {
 		log.Printf("too many tasks")
@@ -283,6 +290,13 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 	t.ID = counter
 	t.Created = time.Now()
 	todos = append(todos, t)
+	*/
+	if err := storage.AddTodo(t, db); err != nil {
+		log.Printf("Add task error")
+		respondError(w, "Add task error", http.StatusInternalServerError)
+		return
+
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(t)
