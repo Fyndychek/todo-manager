@@ -15,10 +15,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	_ "github.com/Fyndychek/todo-manager/internal/handlers"
-	"github.com/Fyndychek/todo-manager/internal/storage"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 // структура задачи
@@ -48,15 +44,6 @@ var (
 )
 
 func main() {
-
-	dbFile := os.Getenv("DB_FILE")
-	if dbFile == "" {
-		dbFile = "todos.db"
-	}
-	_, err := storage.NewDatabase(dbFile)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	port := 8080
 	if p := os.Getenv("PORT"); p != "" {
