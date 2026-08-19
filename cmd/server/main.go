@@ -60,6 +60,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
 	port := 8080
 	if p := os.Getenv("PORT"); p != "" {
@@ -259,6 +260,8 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 func createTodo(w http.ResponseWriter, r *http.Request) {
 
 	var t storage.DBtodo
+	var resid int64
+	var errDB error
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		log.Printf("Decode error: %v", err)
@@ -288,15 +291,16 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 	}
 	counter++
 	t.ID = counter
-	t.Created = time.Now()
 	todos = append(todos, t)
 	*/
-	if err := storage.AddTodo(t, db); err != nil {
+	t.Created = time.Now()
+	if resid, errDB = storage.AddTodo(t, db); errDB != nil {
 		log.Printf("Add task error")
 		respondError(w, "Add task error", http.StatusInternalServerError)
 		return
 
 	}
+	t.ID = resid
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(t)
