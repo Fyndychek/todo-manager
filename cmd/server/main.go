@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -161,7 +160,6 @@ func respondError(w http.ResponseWriter, message string, status int) {
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 
-	var tfilter []Todo
 	filter := r.URL.Query().Get("filter")
 	sortby := r.URL.Query().Get("sort")
 	order := r.URL.Query().Get("order")
@@ -175,86 +173,27 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 		order = "asc"
 	}
 
-	//работа с массивом
-	mu.Lock()
-	defer mu.Unlock()
-	if filter != "" {
-		if len(filter) > 255 {
-			log.Printf("too long request")
-			respondError(w, "too long request(max 255)", http.StatusBadRequest)
-			return
-		}
-		switch filter {
-		case "all":
-			tfilter = append([]Todo{}, todos...)
+	if len(filter) > 255 {
+		log.Printf("too long request")
+		respondError(w, "too long request(max 255)", http.StatusBadRequest)
+		return
+	}
 
-		case "completed":
-			for _, t := range todos {
-				if t.Completed == true {
-					tfilter = append(tfilter, t)
-				}
-			}
-		case "active":
-			for _, t := range todos {
-				if t.Completed == false {
-					tfilter = append(tfilter, t)
-				}
-			}
-		default:
-			tfilter = append([]Todo{}, todos...)
-		}
+	if len(sortby) > 255 {
+		log.Printf("too long request")
+		respondError(w, "too long request(max 255)", http.StatusBadRequest)
+		return
+	}
+
+	if tfilter, err := storage.GetTodos(filter, sortby, order, db); err != nil {
+		log.Printf("Add task error")
+		respondError(w, "Add task error", http.StatusInternalServerError)
+		return
 	} else {
-		tfilter = append([]Todo{}, todos...)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tfilter)
 	}
 
-	if sortby != "" {
-		if len(sortby) > 255 {
-			log.Printf("too long request")
-			respondError(w, "too long request(max 255)", http.StatusBadRequest)
-			return
-		}
-		switch sortby {
-		case "id":
-			sort.Slice(tfilter, func(i, j int) bool {
-				if order == "desc" {
-					return tfilter[i].ID > tfilter[j].ID
-				}
-				return tfilter[i].ID < tfilter[j].ID
-			})
-		case "title":
-			sort.Slice(tfilter, func(i, j int) bool {
-				if order == "desc" {
-					return tfilter[i].Title > tfilter[j].Title
-				}
-				return tfilter[i].Title < tfilter[j].Title
-			})
-		case "completed":
-			sort.Slice(tfilter, func(i, j int) bool {
-				if order == "desc" {
-					return tfilter[i].Completed && !tfilter[j].Completed
-				}
-				return !tfilter[i].Completed && tfilter[j].Completed
-			})
-		case "created":
-			sort.Slice(tfilter, func(i, j int) bool {
-				if order == "desc" {
-					return tfilter[i].Created.After(tfilter[j].Created)
-				}
-				return tfilter[i].Created.Before(tfilter[j].Created)
-			})
-		default:
-			sort.Slice(tfilter, func(i, j int) bool {
-				if order == "desc" {
-					return tfilter[i].Title > tfilter[j].Title
-				}
-				return tfilter[i].Title < tfilter[j].Title
-			})
-
-		}
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tfilter)
 }
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
@@ -281,18 +220,6 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//работа с массивом
-	/*mu.Lock()
-	defer mu.Unlock()
-	if len(todos) > 255 {
-		log.Printf("too many tasks")
-		respondError(w, "too many tasks", http.StatusConflict)
-		return
-	}
-	counter++
-	t.ID = counter
-	todos = append(todos, t)
-	*/
 	t.Created = time.Now()
 	if resid, errDB = storage.AddTodo(t, db); errDB != nil {
 		log.Printf("Add task error")
