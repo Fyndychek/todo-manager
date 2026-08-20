@@ -178,6 +178,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//вызов слоя бд
 	if tfilter, err := storage.GetTodos(filter, sortby, order, db); err != nil {
 		log.Printf("Get task error: %v", err)
 		respondError(w, "Get task error", http.StatusInternalServerError)
@@ -213,6 +214,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//вызов слоя бд
 	t.Created = time.Now()
 	if resid, errDB = storage.AddTodo(t, db); errDB != nil {
 		log.Printf("Add task error")
@@ -258,6 +260,7 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	//вызов слоя бд
 	todo, err := storage.UpdateTodo(id, upd, db)
 	if err != nil {
 		if err == sql.ErrNoRows {

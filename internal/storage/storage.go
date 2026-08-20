@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// структура задачи
 type DBtodo struct {
 	ID        int64     `json:"id"`
 	Title     string    `json:"title"`
@@ -19,6 +20,7 @@ type UpdateTodoRequest struct {
 	Completed *bool   `json:"completed"`
 }
 
+// заготовки запросов к бд
 const (
 	schema = `
 	CREATE TABLE IF NOT EXISTS todos(
@@ -57,8 +59,11 @@ func NewDatabase(dbFile string) (*sql.DB, error) {
 }
 
 func AddTodo(t DBtodo, db *sql.DB) (int64, error) {
-	var result sql.Result
-	var err error
+
+	var (
+		result sql.Result
+		err    error
+	)
 	if result, err = db.Exec(insert, t.Title, t.Completed, t.Created); err != nil {
 		return 0, err
 	}
@@ -72,9 +77,12 @@ func AddTodo(t DBtodo, db *sql.DB) (int64, error) {
 }
 
 func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo, error) {
-	var todos []DBtodo
-	var t DBtodo
-	var request string
+
+	var (
+		todos   []DBtodo
+		t       DBtodo
+		request string
+	)
 	switch filter {
 	case "all":
 		request = "select * from todos"
@@ -150,8 +158,11 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 }
 
 func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
-	var t DBtodo
-	var err error
+
+	var (
+		t   DBtodo
+		err error
+	)
 	if upd.Completed != nil && upd.Title == nil {
 		if _, err = db.Exec("update todos set completed = ? where id =?", *upd.Completed, id); err != nil {
 			return t, err
