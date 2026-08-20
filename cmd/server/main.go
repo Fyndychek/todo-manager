@@ -42,10 +42,9 @@ type SortGet struct {
 }
 
 var (
-	todos   = []Todo{}
-	mu      sync.Mutex
-	counter = 0
-	db      *sql.DB
+	todos = []Todo{}
+	mu    sync.Mutex
+	db    *sql.DB
 )
 
 func main() {
