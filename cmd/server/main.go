@@ -192,9 +192,11 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 
-	var t storage.DBtodo
-	var resid int64
-	var errDB error
+	var (
+		t     storage.DBtodo
+		resid int64
+		errDB error
+	)
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		log.Printf("Decode error: %v", err)
