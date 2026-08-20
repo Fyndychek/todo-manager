@@ -13,6 +13,12 @@ type DBtodo struct {
 	Created   time.Time `json:"created_at"`
 }
 
+// структура патча задачи
+type UpdateTodoRequest struct {
+	Title     *string `json:"title"`
+	Completed *bool   `json:"completed"`
+}
+
 const (
 	schema = `
 	CREATE TABLE IF NOT EXISTS todos(
@@ -135,7 +141,50 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 		}
 		todos = append(todos, t)
 	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return todos, nil
 
+}
+
+func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
+	var t DBtodo
+	var err error
+	if upd.Completed != nil && upd.Title == nil {
+		if _, err = db.Exec("update todos set completed = ? where id =?", *upd.Completed, id); err != nil {
+			return t, err
+		}
+	}
+	if upd.Title != nil && upd.Completed == nil {
+		if _, err = db.Exec("update todos set title = ? where id =?", *upd.Title, id); err != nil {
+			return t, err
+		}
+	}
+	if upd.Title != nil && upd.Completed != nil {
+		if _, err = db.Exec("update todos set title = ?, completed = ? where id =?", *upd.Title, *upd.Completed, id); err != nil {
+			return t, err
+		}
+	}
+	rows, err := db.Query("select * from todos where id = ?", id)
+	if err != nil {
+		return t, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err := rows.Scan(&t.ID, &t.Title, &t.Completed, &t.Created)
+		if err != nil {
+			log.Println(err)
+			return t, err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return DBtodo{}, err
+	}
+	if t.ID == 0 {
+		return t, sql.ErrNoRows
+	}
+
+	return t, nil
 }

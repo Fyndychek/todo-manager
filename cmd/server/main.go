@@ -29,12 +29,6 @@ type Todo struct {
 	Created   time.Time `json:"created_at"`
 }
 
-// структура патча задачи
-type UpdateTodoRequest struct {
-	Title     *string `json:"title"`
-	Completed *bool   `json:"completed"`
-}
-
 type SortGet struct {
 	Filter *string `json:"filter"`
 	Sort   *string `json:"sort"`
@@ -234,7 +228,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 
 func updateTodo(w http.ResponseWriter, r *http.Request) {
 
-	var upd UpdateTodoRequest
+	var upd storage.UpdateTodoRequest
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&upd); err != nil {
 		log.Printf("Decode error: %v", err)
@@ -264,25 +258,21 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//работа с массивом
-	mu.Lock()
-	defer mu.Unlock()
-	for i := range todos {
-		if todos[i].ID == id {
-			if upd.Title != nil {
-				todos[i].Title = *upd.Title
-			}
-			if upd.Completed != nil {
-				todos[i].Completed = *upd.Completed
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(todos[i])
+	todo, err := storage.UpdateTodo(id, upd, db)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondError(w, "Not Found", http.StatusNotFound)
+			log.Printf("Not Found ID")
 			return
 		}
+		respondError(w, "Update error", http.StatusInternalServerError)
+		log.Printf("Update error: %v", err)
+		return
 	}
-	respondError(w, "Not Found", http.StatusNotFound)
-	log.Printf("Not Found ID")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(todo)
+
 }
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
