@@ -186,8 +186,8 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if tfilter, err := storage.GetTodos(filter, sortby, order, db); err != nil {
-		log.Printf("Add task error")
-		respondError(w, "Add task error", http.StatusInternalServerError)
+		log.Printf("Get task error: %v", err)
+		respondError(w, "Get task error", http.StatusInternalServerError)
 		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")

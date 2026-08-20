@@ -87,37 +87,37 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 	switch sortby {
 	case "id":
 		if order == "desc" {
-			request = request + " order by id DESK"
+			request = request + " order by id DESC"
 		} else {
-			request = request + " order by id ASK"
+			request = request + " order by id ASC"
 		}
 
 	case "title":
 		if order == "desc" {
-			request = request + " order by title DESK"
+			request = request + " order by title DESC"
 		} else {
-			request = request + " order by title ASK"
+			request = request + " order by title ASC"
 		}
 
 	case "completed":
 		if order == "desc" {
-			request = request + " order by completed DESK"
+			request = request + " order by completed DESC"
 		} else {
-			request = request + " order by completed ASK"
+			request = request + " order by completed ASC"
 		}
 
 	case "created":
 		if order == "desc" {
-			request = request + " order by created DESK"
+			request = request + " order by created DESC"
 		} else {
-			request = request + " order by created ASK"
+			request = request + " order by created ASC"
 		}
 
 	default:
 		if order == "desc" {
-			request = request + " order by title DESK"
+			request = request + " order by title DESC"
 		} else {
-			request = request + " order by title ASK"
+			request = request + " order by title ASC"
 		}
 
 	}
