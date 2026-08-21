@@ -199,3 +199,7 @@ func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
 
 	return t, nil
 }
+
+func DeleteTodo(id int, db *sql.DB) {
+
+}
