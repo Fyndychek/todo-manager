@@ -290,21 +290,22 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//работа с массивом
-	mu.Lock()
-	defer mu.Unlock()
-	for i, t := range todos {
-		if t.ID == id {
-			t = todos[i]
-			todos = append(todos[:i], todos[i+1:]...)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(t)
+	if t, err := storage.DeleteTodo(id, db); err != nil {
+		if err == sql.ErrNoRows {
+			respondError(w, "Not Found", http.StatusNotFound)
+			log.Printf("Not Found ID")
+		} else {
+			respondError(w, "Delete error", http.StatusInternalServerError)
+			log.Printf("Delete error: %v", err)
 			return
 		}
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(t)
+		return
+
 	}
-	respondError(w, "Not Found", http.StatusNotFound)
-	log.Printf("Not Found ID")
 }
 
 func getStats(w http.ResponseWriter, r *http.Request) {

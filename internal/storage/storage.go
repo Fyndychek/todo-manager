@@ -200,6 +200,31 @@ func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
 	return t, nil
 }
 
-func DeleteTodo(id int, db *sql.DB) {
+func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
+	var (
+		err error
+		t   DBtodo
+	)
+	//получаем задачу
+	rows, err := db.Query("select * from todos where completed = ?", id)
+	if err != nil {
+		return DBtodo{}, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err := rows.Scan(&t.ID, &t.Title, &t.Completed, &t.Created)
+		if err != nil {
+			log.Println(err)
+			return DBtodo{}, err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return DBtodo{}, err
+	}
+
+	if _, err = db.Exec("delete from todos where id = ?", id); err != nil {
+		return DBtodo{}, err
+	}
+	return t, err
 
 }
