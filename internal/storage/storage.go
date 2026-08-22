@@ -206,7 +206,7 @@ func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
 		t   DBtodo
 	)
 	//получаем задачу
-	rows, err := db.Query("select * from todos where completed = ?", id)
+	rows, err := db.Query("select * from todos where id = ?", id)
 	if err != nil {
 		return DBtodo{}, err
 	}
