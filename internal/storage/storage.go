@@ -232,6 +232,7 @@ func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
 }
 
 func GetStats(db *sql.DB) (int, int, int, error) {
+
 	var (
 		total     int
 		completed int
