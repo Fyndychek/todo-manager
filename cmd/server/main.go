@@ -318,11 +318,12 @@ func getStats(w http.ResponseWriter, r *http.Request) {
 	var (
 		total     int
 		completed int
+		pending   int
 		err       error
 	)
 
 	//вызов слоя бд
-	if total, completed, err = storage.GetStats(db); err != nil {
+	if total, completed, pending, err = storage.GetStats(db); err != nil {
 		respondError(w, "Get stats error", http.StatusInternalServerError)
 		log.Printf("Get stats error: %v", err)
 		return
@@ -335,7 +336,7 @@ func getStats(w http.ResponseWriter, r *http.Request) {
 	}{
 		Total:     total,
 		Completed: completed,
-		Pending:   total - completed,
+		Pending:   pending,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)

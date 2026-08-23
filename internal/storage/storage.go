@@ -234,33 +234,39 @@ func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
 	return t, err
 }
 
-func GetStats(db *sql.DB) (int, int, error) {
+func GetStats(db *sql.DB) (int, int, int, error) {
 	var (
 		total     int
 		completed int
+		pending   int
 	)
 	rows, err := db.Query("select count(*) from todos")
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		total += 1
+		if err := rows.Scan(&total); err != nil {
+			return 0, 0, 0, err
+		}
 	}
 	if err = rows.Err(); err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 	rows, err = db.Query("select count(*) from todos where completed = 1")
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		completed += 1
+		if err := rows.Scan(&completed); err != nil {
+			return 0, 0, 0, err
+		}
 	}
 	if err = rows.Err(); err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
+	pending = total - completed
 
-	return total, completed, err
+	return total, completed, pending, err
 }
