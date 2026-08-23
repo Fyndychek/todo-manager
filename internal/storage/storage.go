@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // структура задачи
@@ -36,6 +38,12 @@ const (
 		INSERT INTO todos (
 		title, completed, created, user_id
 		) VALUES (?, ?, ?, ?)
+	`
+
+	insertUsers = `
+		INSERT INTO users (
+		username, password_hash
+		) VALUES (?,?)
 	`
 
 	UserShema = `
@@ -284,9 +292,19 @@ func GetStats(db *sql.DB) (int, int, int, error) {
 	return total, completed, pending, nil
 }
 
-func CreateUser(username, passwordHash string, db *sql.DB) (int64, error) {
+func CreateUser(username, password string, db *sql.DB) (int64, error) {
 
-	return 0, nil
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := db.Exec(insertUsers, username, string(hash))
+	if err != nil {
+		return 0, err
+	}
+
+	return result.LastInsertId()
 
 }
 
