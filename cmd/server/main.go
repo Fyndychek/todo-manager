@@ -315,25 +315,27 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 
 func getStats(w http.ResponseWriter, r *http.Request) {
 
-	var completed int
+	var (
+		total     int
+		completed int
+		err       error
+	)
 
-	//работа с массивом
-	mu.Lock()
-	defer mu.Unlock()
-	//for i := 0; i < len(todos); i++
-	for _, t := range todos {
-		if t.Completed == true {
-			completed++
-		}
+	//вызов слоя бд
+	if total, completed, err = storage.GetStats(db); err != nil {
+		respondError(w, "Get stats error", http.StatusInternalServerError)
+		log.Printf("Get stats error: %v", err)
+		return
 	}
+
 	stats := struct {
 		Total     int `json:"total"`
 		Completed int `json:"completed"`
 		Pending   int `json:"pending"`
 	}{
-		Total:     len(todos),
+		Total:     total,
 		Completed: completed,
-		Pending:   len(todos) - completed,
+		Pending:   total - completed,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
