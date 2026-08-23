@@ -63,18 +63,34 @@ func main() {
 		filePath := filepath.Join(wd, "cmd", "sandbox", "index.html")
 		http.ServeFile(w, r, filePath)
 	}))
+	http.HandleFunc("/neiroslop2", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/neiroslop2" {
+			http.NotFound(w, r)
+			return
+		}
+		// Получаем текущую рабочую директорию
+		wd, _ := os.Getwd()
+		filePath := filepath.Join(wd, "cmd", "sandbox", "index3.html")
+		http.ServeFile(w, r, filePath)
+	}))
 	http.HandleFunc("/health", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	}))
-	http.HandleFunc("GET /todos/stats", corsMiddleware(getStats))
 
+	http.HandleFunc("GET /todos/stats", corsMiddleware(getStats))
 	//CRUD
 	http.HandleFunc("GET /todos", corsMiddleware(getTodos))
 	http.HandleFunc("POST /todos", corsMiddleware(createTodo))
 	http.HandleFunc("DELETE /todos/{id}", corsMiddleware(deleteTodo))
 	http.HandleFunc("PATCH /todos/{id}", corsMiddleware(updateTodo))
 
+	//auth
+	http.HandleFunc("POST /register", corsMiddleware(registration))
+	http.HandleFunc("POST /login", corsMiddleware(login))
+
+	//
+	//
 	//запуск
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -174,9 +190,10 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 func createTodo(w http.ResponseWriter, r *http.Request) {
 
 	var (
-		t     storage.DBtodo
-		resid int64
-		errDB error
+		t       storage.DBtodo
+		resid   int64
+		errDB   error
+		user_id int = 1
 	)
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
@@ -199,7 +216,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 
 	//вызов слоя бд
 	t.Created = time.Now()
-	if resid, errDB = storage.AddTodo(t, db); errDB != nil {
+	if resid, errDB = storage.AddTodo(t, db, user_id); errDB != nil {
 		log.Printf("Add task error")
 		respondError(w, "Add task error", http.StatusInternalServerError)
 		return
@@ -317,4 +334,12 @@ func getStats(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
+}
+
+func registration(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+
 }

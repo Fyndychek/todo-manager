@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo Manager — Darknet</title>
+  <style>
+    /* Reset & base */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: #0a0a0a;
+      color: #00ff41;
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .app {
+      max-width: 800px;
+      width: 100%;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #00ff41;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(0,255,65,0.5);
+    }
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid #00ff41;
+      color: #00ff41;
+      border-radius: 4px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+    .theme-toggle:hover {
+      background: #00ff41;
+      color: #0a0a0a;
+    }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      border: 1px solid #00ff41;
+      padding: 12px 16px;
+      background: #0f0f0f;
+    }
+    .stat-card {
+      font-size: 1rem;
+    }
+    .stat-card span:last-child {
+      font-weight: bold;
+      color: #00ff41;
+      margin-left: 6px;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #00ff41;
+      padding: 12px 16px;
+      background: #0f0f0f;
+    }
+    .toolbar select, .toolbar button {
+      background: transparent;
+      border: 1px solid #00ff41;
+      color: #00ff41;
+      padding: 6px 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .toolbar select:hover, .toolbar button:hover {
+      background: #00ff41;
+      color: #0a0a0a;
+    }
+    .toolbar .reset-btn {
+      margin-left: auto;
+    }
+
+    /* Add form */
+    .add-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .add-form input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #0f0f0f;
+      border: 1px solid #00ff41;
+      color: #00ff41;
+      font-family: inherit;
+      font-size: 1rem;
+      outline: none;
+    }
+    .add-form input:focus {
+      box-shadow: 0 0 10px rgba(0,255,65,0.3);
+    }
+    .add-form button {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid #00ff41;
+      color: #00ff41;
+      font-family: inherit;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .add-form button:hover {
+      background: #00ff41;
+      color: #0a0a0a;
+    }
+
+    /* Todo list */
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .todo-item {
+      border: 1px solid #00ff41;
+      padding: 12px 16px;
+      background: #0f0f0f;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: 0.2s;
+    }
+    .todo-item:hover {
+      background: #1a1a1a;
+      border-color: #66ff88;
+    }
+    .todo-item.completed .todo-title {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+    .todo-check {
+      width: 18px;
+      height: 18px;
+      accent-color: #00ff41;
+      cursor: pointer;
+      flex-shrink: 0;
+      background: #0f0f0f;
+      border: 1px solid #00ff41;
+    }
+    .todo-title {
+      flex: 1;
+      font-size: 1rem;
+      outline: none;
+      padding: 4px 0;
+      border-bottom: 1px solid transparent;
+      transition: 0.2s;
+      word-break: break-word;
+    }
+    .todo-title[contenteditable="true"] {
+      border-bottom-color: #00ff41;
+      background: #1a1a1a;
+      padding: 4px 8px;
+    }
+    .todo-date {
+      font-size: 0.8rem;
+      color: #66ff88;
+      white-space: nowrap;
+      opacity: 0.8;
+    }
+    .todo-delete {
+      background: transparent;
+      border: none;
+      color: #00ff41;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: 0.2s;
+    }
+    .todo-delete:hover {
+      color: #ff4444;
+      background: rgba(255,68,68,0.1);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 40px 0;
+      color: #66ff88;
+      opacity: 0.7;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .toast {
+      background: #0f0f0f;
+      color: #00ff41;
+      border: 1px solid #00ff41;
+      padding: 10px 20px;
+      font-family: inherit;
+      animation: fadeSlide 0.25s ease;
+    }
+    .toast.error {
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+    .toast.success {
+      border-color: #00ff41;
+      color: #00ff41;
+    }
+    @keyframes fadeSlide {
+      from { opacity:0; transform: translateY(10px); }
+      to { opacity:1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .add-form { flex-direction: column; }
+      .toolbar .reset-btn { margin-left: 0; }
+      .todo-item { flex-wrap: wrap; }
+      .todo-date { margin-left: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <h1>✦ Todo Manager</h1>
+    <button class="theme-toggle" id="themeToggle">☀️</button>
+  </header>
+
+  <div class="stats" id="stats">
+    <div class="stat-card">📊 Всего <span id="totalCount">0</span></div>
+    <div class="stat-card">✅ Выполнено <span id="completedCount">0</span></div>
+    <div class="stat-card">⏳ Осталось <span id="pendingCount">0</span></div>
+  </div>
+
+  <div class="toolbar">
+    <select id="filterSelect">
+      <option value="all">Все</option>
+      <option value="active">Активные</option>
+      <option value="completed">Выполненные</option>
+    </select>
+    <select id="sortSelect">
+      <option value="created">По дате</option>
+      <option value="title">По названию</option>
+    </select>
+    <select id="orderSelect">
+      <option value="asc">↑ Возр.</option>
+      <option value="desc">↓ Убыв.</option>
+    </select>
+    <button class="reset-btn" id="resetFilters">Сбросить</button>
+  </div>
+
+  <form class="add-form" id="addForm">
+    <input type="text" id="newTodoInput" placeholder="Что нужно сделать?" maxlength="255" autocomplete="off" required />
+    <button type="submit">+ Добавить</button>
+  </form>
+
+  <div class="todo-list" id="todoList">
+    <div class="empty">Задач пока нет 😊</div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ============================================================
+  //  API Client
+  // ============================================================
+  const API_BASE = '';
+
+  async function apiFetch(endpoint, options = {}) {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+    });
+    if (!res.ok) {
+      let msg = `Ошибка ${res.status}`;
+      try {
+        const data = await res.json();
+        if (data.error) msg = data.error;
+      } catch (_) {}
+      throw new Error(msg);
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  // ============================================================
+  //  State
+  // ============================================================
+  let todos = [];
+  let filter = 'all';
+  let sort = 'created';
+  let order = 'asc';
+
+  // ============================================================
+  //  DOM refs
+  // ============================================================
+  const todoListEl = document.getElementById('todoList');
+  const totalEl = document.getElementById('totalCount');
+  const completedEl = document.getElementById('completedCount');
+  const pendingEl = document.getElementById('pendingCount');
+  const filterSelect = document.getElementById('filterSelect');
+  const sortSelect = document.getElementById('sortSelect');
+  const orderSelect = document.getElementById('orderSelect');
+  const resetBtn = document.getElementById('resetFilters');
+  const addForm = document.getElementById('addForm');
+  const newTodoInput = document.getElementById('newTodoInput');
+  const themeToggle = document.getElementById('themeToggle');
+  const toastContainer = document.getElementById('toastContainer');
+
+  // ============================================================
+  //  Theme toggle (light/dark) – но мы всегда в тёмном стиле, но можно переключать фон
+  // ============================================================
+  let darkMode = true;
+  themeToggle.addEventListener('click', () => {
+    darkMode = !darkMode;
+    document.body.style.background = darkMode ? '#0a0a0a' : '#f0f0f0';
+    document.body.style.color = darkMode ? '#00ff41' : '#111';
+    // меняем цвета элементов — для простоты оставим как есть, можно доработать
+    themeToggle.textContent = darkMode ? '☀️' : '🌙';
+  });
+
+  // ============================================================
+  //  Toast
+  // ============================================================
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+
+  // ============================================================
+  //  Date formatting (исправленная)
+  // ============================================================
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    // Пробуем создать Date
+    let d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+      // Если не парсится, заменяем пробел на 'T' и добавляем 'Z'
+      const iso = dateStr.replace(' ', 'T') + 'Z';
+      d = new Date(iso);
+    }
+    if (isNaN(d.getTime())) {
+      return dateStr; // fallback
+    }
+    // Формат: "23 Aug 2026 06:08"
+    const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return d.toLocaleString('ru', options);
+  }
+
+  // ============================================================
+  //  Render
+  // ============================================================
+  function renderTodos() {
+    let filtered = todos;
+    if (filter === 'active') filtered = filtered.filter(t => !t.completed);
+    else if (filter === 'completed') filtered = filtered.filter(t => t.completed);
+
+    const compare = (a, b) => {
+      let valA, valB;
+      if (sort === 'created') {
+        valA = new Date(a.created).getTime();
+        valB = new Date(b.created).getTime();
+        if (isNaN(valA)) valA = 0;
+        if (isNaN(valB)) valB = 0;
+      } else {
+        valA = a.title.toLowerCase();
+        valB = b.title.toLowerCase();
+      }
+      if (valA < valB) return order === 'asc' ? -1 : 1;
+      if (valA > valB) return order === 'asc' ? 1 : -1;
+      return 0;
+    };
+    filtered.sort(compare);
+
+    if (filtered.length === 0) {
+      todoListEl.innerHTML = `<div class="empty">😴 Нет задач по фильтру</div>`;
+      return;
+    }
+
+    let html = '';
+    filtered.forEach(t => {
+      const checked = t.completed ? 'checked' : '';
+      const date = formatDate(t.created);
+      // отладочный вывод
+      console.log('Task:', t.id, t.title, t.created, '→', date);
+      html += `
+        <div class="todo-item ${t.completed ? 'completed' : ''}" data-id="${t.id}">
+          <input type="checkbox" class="todo-check" ${checked} />
+          <span class="todo-title" contenteditable="false">${escapeHtml(t.title)}</span>
+          <span class="todo-date">${date}</span>
+          <button class="todo-delete" aria-label="Удалить">✕</button>
+        </div>
+      `;
+    });
+    todoListEl.innerHTML = html;
+    attachItemEvents();
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function updateStats() {
+    const total = todos.length;
+    const completed = todos.filter(t => t.completed).length;
+    const pending = total - completed;
+    totalEl.textContent = total;
+    completedEl.textContent = completed;
+    pendingEl.textContent = pending;
+  }
+
+  // ============================================================
+  //  Attach events (аналогично предыдущему коду)
+  // ============================================================
+  function attachItemEvents() {
+    // Чекбоксы
+    document.querySelectorAll('.todo-check').forEach(cb => {
+      cb.addEventListener('change', async (e) => {
+        const item = e.target.closest('.todo-item');
+        const id = parseInt(item.dataset.id);
+        if (isNaN(id)) {
+          showToast('Некорректный ID', 'error');
+          return;
+        }
+        const completed = e.target.checked;
+        try {
+          const updated = await apiFetch(`/todos/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ completed }),
+          });
+          const idx = todos.findIndex(t => t.id === id);
+          if (idx !== -1) todos[idx].completed = updated.completed;
+          renderTodos();
+          updateStats();
+          showToast(completed ? '✅ Выполнено' : '🔄 Возвращено');
+        } catch (err) {
+          showToast(err.message, 'error');
+          e.target.checked = !completed;
+        }
+      });
+    });
+
+    // Удаление
+    document.querySelectorAll('.todo-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const item = e.target.closest('.todo-item');
+        const id = parseInt(item.dataset.id);
+        if (isNaN(id)) {
+          showToast('Некорректный ID', 'error');
+          return;
+        }
+        if (!confirm('Удалить задачу?')) return;
+        try {
+          await apiFetch(`/todos/${id}`, { method: 'DELETE' });
+          todos = todos.filter(t => t.id !== id);
+          renderTodos();
+          updateStats();
+          showToast('🗑️ Удалено');
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      });
+    });
+
+    // Редактирование
+    document.querySelectorAll('.todo-title').forEach(el => {
+      el.addEventListener('dblclick', () => {
+        el.contentEditable = 'true';
+        el.focus();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      });
+      el.addEventListener('blur', async () => {
+        if (el.contentEditable !== 'true') return;
+        el.contentEditable = 'false';
+        const newTitle = el.textContent.trim();
+        if (!newTitle) {
+          showToast('Название не может быть пустым', 'error');
+          const id = parseInt(el.closest('.todo-item').dataset.id);
+          const original = todos.find(t => t.id === id);
+          if (original) el.textContent = original.title;
+          return;
+        }
+        const id = parseInt(el.closest('.todo-item').dataset.id);
+        if (isNaN(id)) {
+          showToast('Некорректный ID', 'error');
+          return;
+        }
+        try {
+          const updated = await apiFetch(`/todos/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ title: newTitle }),
+          });
+          const idx = todos.findIndex(t => t.id === id);
+          if (idx !== -1) todos[idx].title = updated.title;
+          renderTodos();
+          updateStats();
+          showToast('✏️ Обновлено');
+        } catch (err) {
+          showToast(err.message, 'error');
+          const original = todos.find(t => t.id === id);
+          if (original) el.textContent = original.title;
+        }
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+        if (e.key === 'Escape') {
+          const id = parseInt(el.closest('.todo-item').dataset.id);
+          const original = todos.find(t => t.id === id);
+          if (original) el.textContent = original.title;
+          el.contentEditable = 'false';
+        }
+      });
+    });
+  }
+
+  // ============================================================
+  //  Load data
+  // ============================================================
+  async function loadTodos() {
+    try {
+      const params = new URLSearchParams({ filter, sort, order });
+      const data = await apiFetch(`/todos?${params}`);
+      todos = data || [];
+      renderTodos();
+      updateStats();
+    } catch (err) {
+      showToast('Не удалось загрузить: ' + err.message, 'error');
+    }
+  }
+
+  async function loadStats() {
+    try {
+      const stats = await apiFetch('/todos/stats');
+      if (stats) {
+        totalEl.textContent = stats.total;
+        completedEl.textContent = stats.completed;
+        pendingEl.textContent = stats.pending;
+      }
+    } catch (_) {}
+  }
+
+  // ============================================================
+  //  Add todo
+  // ============================================================
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = newTodoInput.value.trim();
+    if (!title) {
+      showToast('Введите название', 'error');
+      return;
+    }
+    try {
+      const newTodo = await apiFetch('/todos', {
+        method: 'POST',
+        body: JSON.stringify({ title }),
+      });
+      todos.unshift(newTodo);
+      renderTodos();
+      updateStats();
+      newTodoInput.value = '';
+      showToast('🎉 Добавлено!');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
+
+  // ============================================================
+  //  Filter / Sort controls
+  // ============================================================
+  filterSelect.addEventListener('change', () => {
+    filter = filterSelect.value;
+    loadTodos();
+  });
+  sortSelect.addEventListener('change', () => {
+    sort = sortSelect.value;
+    loadTodos();
+  });
+  orderSelect.addEventListener('change', () => {
+    order = orderSelect.value;
+    loadTodos();
+  });
+  resetBtn.addEventListener('click', () => {
+    filterSelect.value = 'all';
+    sortSelect.value = 'created';
+    orderSelect.value = 'asc';
+    filter = 'all';
+    sort = 'created';
+    order = 'asc';
+    loadTodos();
+  });
+
+  // ============================================================
+  //  Init
+  // ============================================================
+  loadTodos();
+  loadStats();
+  setInterval(loadStats, 30000);
+  console.log('🚀 Darknet Todo Manager');
+</script>
+</body>
+</html>

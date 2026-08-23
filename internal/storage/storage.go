@@ -23,20 +23,26 @@ type UpdateTodoRequest struct {
 // заготовки запросов к бд
 const (
 	schema = `
-	CREATE TABLE IF NOT EXISTS todos(
-  id INTEGER PRIMARY KEY AUTOINCREMENT, 
-  title TEXT,
-  completed BOOLEAN,
-  created DATETIME
-	);
-`
+		CREATE TABLE IF NOT EXISTS todos(
+  		id INTEGER PRIMARY KEY AUTOINCREMENT, 
+  		title TEXT,
+  		completed BOOLEAN,
+  		created DATETIME	
+  		user_id INTEGER NOT NULL DEFAULT 1
+		);
+	`
+
 	insert = `
-INSERT INTO todos (
-	title, completed, created
-) VALUES (
-	?, ?, ?
-)
-`
+		INSERT INTO todos (
+		title, completed, created, user_id
+		) VALUES (?, ?, ?, ?)
+	`
+	User_shema = `
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username TEXT UNIQUE NOT NULL,
+		password_hash TEXT NOT NULL,
+		created_at	DATETIME DEFAULT CURRENT_TIMESTAMP
+	`
 )
 
 func NewDatabase(dbFile string) (*sql.DB, error) {
@@ -58,7 +64,7 @@ func NewDatabase(dbFile string) (*sql.DB, error) {
 	return newDB, nil
 }
 
-func AddTodo(t DBtodo, db *sql.DB) (int64, error) {
+func AddTodo(t DBtodo, db *sql.DB, user_id int) (int64, error) {
 
 	var (
 		result sql.Result
@@ -136,7 +142,7 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 
 	}
 
-	rows, err := db.Query(request)
+	rows, err := db.Query(request+"where user_id = ?", 1)
 	if err != nil {
 		return nil, err
 	}
@@ -267,4 +273,16 @@ func GetStats(db *sql.DB) (int, int, int, error) {
 	pending = total - completed
 
 	return total, completed, pending, nil
+}
+
+func CreateUser(username, passwordHash string, db *sql.DB) (int64, error) {
+
+	return 0, nil
+
+}
+
+func GetUserByUsername(username string, db *sql.DB) (int64, string, error) {
+
+	return 0, "", nil
+
 }
