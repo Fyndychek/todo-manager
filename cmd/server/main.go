@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -36,9 +35,7 @@ type SortGet struct {
 }
 
 var (
-	todos = []Todo{}
-	mu    sync.Mutex
-	db    *sql.DB
+	db *sql.DB
 )
 
 func main() {
@@ -178,12 +175,6 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 	//вызов слоя бд
 	if tfilter, err := storage.GetTodos(filter, sortby, order, db); err != nil {
-		if err == sql.ErrNoRows {
-			log.Printf("No tasks: %v", err)
-			respondError(w, "No tasks", http.StatusInternalServerError)
-			return
-
-		}
 		log.Printf("Get task error: %v", err)
 		respondError(w, "Get task error", http.StatusInternalServerError)
 		return

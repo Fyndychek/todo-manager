@@ -152,9 +152,6 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	if todos == nil {
-		return nil, sql.ErrNoRows
-	}
 
 	return todos, nil
 }
