@@ -152,6 +152,9 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
+	if todos == nil {
+		return nil, sql.ErrNoRows
+	}
 
 	return todos, nil
 
@@ -194,7 +197,7 @@ func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
 		return DBtodo{}, err
 	}
 	if t.ID == 0 {
-		return t, sql.ErrNoRows
+		return DBtodo{}, sql.ErrNoRows
 	}
 
 	return t, nil
@@ -217,6 +220,9 @@ func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
 			log.Println(err)
 			return DBtodo{}, err
 		}
+	}
+	if t.ID == 0 {
+		return DBtodo{}, sql.ErrNoRows
 	}
 	if err = rows.Err(); err != nil {
 		return DBtodo{}, err

@@ -180,6 +180,12 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 	//вызов слоя бд
 	if tfilter, err := storage.GetTodos(filter, sortby, order, db); err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("No tasks: %v", err)
+			respondError(w, "No tasks", http.StatusInternalServerError)
+			return
+
+		}
 		log.Printf("Get task error: %v", err)
 		respondError(w, "Get task error", http.StatusInternalServerError)
 		return
@@ -290,10 +296,12 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//вызов слоя бд
 	if t, err := storage.DeleteTodo(id, db); err != nil {
 		if err == sql.ErrNoRows {
 			respondError(w, "Not Found", http.StatusNotFound)
 			log.Printf("Not Found ID")
+			return
 		} else {
 			respondError(w, "Delete error", http.StatusInternalServerError)
 			log.Printf("Delete error: %v", err)
