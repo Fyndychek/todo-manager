@@ -27,7 +27,7 @@ const (
   		id INTEGER PRIMARY KEY AUTOINCREMENT, 
   		title TEXT,
   		completed BOOLEAN,
-  		created DATETIME	
+  		created DATETIME,	
   		user_id INTEGER NOT NULL DEFAULT 1
 		);
 	`
@@ -37,11 +37,14 @@ const (
 		title, completed, created, user_id
 		) VALUES (?, ?, ?, ?)
 	`
-	User_shema = `
+
+	UserShema = `
+		CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		username TEXT UNIQUE NOT NULL,
 		password_hash TEXT NOT NULL,
 		created_at	DATETIME DEFAULT CURRENT_TIMESTAMP
+		);
 	`
 )
 
@@ -60,6 +63,9 @@ func NewDatabase(dbFile string) (*sql.DB, error) {
 	if _, err := newDB.Exec(schema); err != nil {
 		return nil, err
 	}
+	if _, err := newDB.Exec(UserShema); err != nil {
+		return nil, err
+	}
 
 	return newDB, nil
 }
@@ -70,7 +76,7 @@ func AddTodo(t DBtodo, db *sql.DB, user_id int) (int64, error) {
 		result sql.Result
 		err    error
 	)
-	if result, err = db.Exec(insert, t.Title, t.Completed, t.Created); err != nil {
+	if result, err = db.Exec(insert, t.Title, t.Completed, t.Created, user_id); err != nil {
 		return 0, err
 	}
 
@@ -85,22 +91,26 @@ func AddTodo(t DBtodo, db *sql.DB, user_id int) (int64, error) {
 func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo, error) {
 
 	var (
-		todos   []DBtodo
-		t       DBtodo
-		request string
+		todos       []DBtodo
+		t           DBtodo
+		BaseRequest string = "select * from todos"
+		request     string
+		WhereClause string = ""
 	)
 	switch filter {
 	case "all":
-		request = "select * from todos"
+		request = BaseRequest
 
 	case "completed":
-		request = "select * from todos where completed = 1"
+		request = BaseRequest
+		WhereClause = " completed = 1"
 
 	case "active":
-		request = "select * from todos where completed = 0"
+		request = BaseRequest
+		WhereClause = " completed = 0"
 
 	default:
-		request = "select * from todos"
+		request = BaseRequest
 
 	}
 
@@ -139,10 +149,9 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 		} else {
 			request = request + " order by title ASC"
 		}
-
 	}
 
-	rows, err := db.Query(request+"where user_id = ?", 1)
+	rows, err := db.Query(request+"where user_id = ?"+WhereClause, 1)
 	if err != nil {
 		return nil, err
 	}
