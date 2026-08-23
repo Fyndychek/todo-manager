@@ -310,6 +310,16 @@ func CreateUser(username, password string, db *sql.DB) (int64, error) {
 
 func GetUserByUsername(username string, db *sql.DB) (int64, string, error) {
 
-	return 0, "", nil
+	var (
+		id   int64
+		hash string
+	)
+	row := db.QueryRow("SELECT id, password_hash FROM users WHERE username = ?", username)
+	err := row.Scan(&id, &hash)
+	if err != nil {
+		return 0, "", err
+	}
+
+	return id, hash, nil
 
 }
