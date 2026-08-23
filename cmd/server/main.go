@@ -121,7 +121,6 @@ func main() {
 	if err := db.Close(); err != nil {
 		log.Printf("Error closing DB: %v", err)
 	}
-
 }
 
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -148,7 +147,6 @@ func respondError(w http.ResponseWriter, message string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
-
 }
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
@@ -283,7 +281,6 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(todo)
-
 }
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {

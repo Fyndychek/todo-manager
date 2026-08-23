@@ -157,7 +157,6 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 	}
 
 	return todos, nil
-
 }
 
 func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
@@ -204,6 +203,7 @@ func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
 }
 
 func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
+
 	var (
 		err error
 		t   DBtodo
@@ -232,5 +232,4 @@ func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
 		return DBtodo{}, err
 	}
 	return t, err
-
 }
