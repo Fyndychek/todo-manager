@@ -337,6 +337,13 @@ func getStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func registration(w http.ResponseWriter, r *http.Request) {
+	var upd storage.UpdateTodoRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	if err := json.NewDecoder(r.Body).Decode(&upd); err != nil {
+		log.Printf("Decode error: %v", err)
+		respondError(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
 
 }
 
