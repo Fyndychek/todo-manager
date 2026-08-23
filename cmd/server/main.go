@@ -24,6 +24,11 @@ var (
 	db *sql.DB
 )
 
+type AuthRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 func main() {
 
 	var err error
