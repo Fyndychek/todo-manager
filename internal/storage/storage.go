@@ -266,5 +266,5 @@ func GetStats(db *sql.DB) (int, int, int, error) {
 	}
 	pending = total - completed
 
-	return total, completed, pending, err
+	return total, completed, pending, nil
 }

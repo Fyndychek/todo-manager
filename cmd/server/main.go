@@ -20,20 +20,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// структура задачи
-type Todo struct {
-	ID        int       `json:"id"`
-	Title     string    `json:"title"`
-	Completed bool      `json:"completed"`
-	Created   time.Time `json:"created_at"`
-}
-
-type SortGet struct {
-	Filter *string `json:"filter"`
-	Sort   *string `json:"sort"`
-	Order  *string `json:"order"`
-}
-
 var (
 	db *sql.DB
 )
