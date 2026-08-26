@@ -190,7 +190,7 @@ func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB, userID int64) (DBtodo
 			return t, err
 		}
 	}
-	rows, err := db.Query("elect id, title, completed, created from todos where id = ? AND user_id = ?", id, userID)
+	rows, err := db.Query("select id, title, completed, created from todos where id = ? AND user_id = ?", id, userID)
 	if err != nil {
 		return t, err
 	}
