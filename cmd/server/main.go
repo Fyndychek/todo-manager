@@ -19,6 +19,7 @@ import (
 	"github.com/Fyndychek/todo-manager/internal/storage"
 	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -404,5 +405,41 @@ func registration(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	var auth AuthRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	if err := json.NewDecoder(r.Body).Decode(&auth); err != nil {
+		log.Printf("Decode error: %v", err)
+		respondError(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	if len(auth.Password) < 4 {
+		respondError(w, "Password is too short. It must been longer than 3 symbols", http.StatusBadRequest)
+		return
+	}
+	if len(auth.Username) < 3 {
+		respondError(w, "Password is too short. It must been longer than 2 symbols", http.StatusBadRequest)
+		return
+	}
+
+	id, hash, err := storage.GetUserByUsername(auth.Username, db)
+	if err != nil {
+		respondError(w, "Login service is not available", http.StatusInternalServerError)
+		return
+	}
+	if id == 0 || hash == "" {
+		respondError(w, "Login or password is incorrect", http.StatusBadRequest)
+		return
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(auth.Password))
+	if err != nil {
+		respondError(w, "Login or password is incorrect", http.StatusBadRequest)
+		return
+	}
+	token, errorToken := generateToken(id)
+	if errorToken != nil {
+		respondError(w, "Login service is not available", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(token)
 
 }
