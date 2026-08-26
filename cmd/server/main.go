@@ -211,12 +211,6 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			respondError(w, "Invalid user_id in token", http.StatusUnauthorized)
 			return
 		}
-		if exp, ok := claims["exp"].(float64); ok {
-			if int64(exp) < time.Now().Unix() {
-				respondError(w, "Token expired", http.StatusUnauthorized)
-				return
-			}
-		}
 		userID := int64(userIDFloat)
 
 		// Сохраняем user_id в контексте
@@ -478,7 +472,7 @@ func registration(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	log.Printf("User is created: %v", err)
+	log.Printf("User created with ID: %d", user_id)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	resp := struct {
