@@ -31,6 +31,10 @@ type AuthRequest struct {
 	Password string `json:"password"`
 }
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 func init() {
@@ -167,6 +171,54 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Получаем заголовок Authorization
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			respondError(w, "Missing authorization header", http.StatusUnauthorized)
+			return
+		}
+		// Проверяем формат "Bearer <token>"
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			respondError(w, "Invalid authorization header format", http.StatusUnauthorized)
+			return
+		}
+		tokenString := parts[1]
+
+		// Парсим и проверяем токен
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return jwtSecret, nil
+		})
+		if err != nil || !token.Valid {
+			respondError(w, "Invalid or expired token", http.StatusUnauthorized)
+			return
+		}
+
+		// Извлекаем user_id из claims
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			respondError(w, "Invalid token claims", http.StatusUnauthorized)
+			return
+		}
+		userIDFloat, ok := claims["user_id"].(float64) // JWT числа приходят как float64
+		if !ok {
+			respondError(w, "Invalid user_id in token", http.StatusUnauthorized)
+			return
+		}
+		userID := int64(userIDFloat)
+
+		// Сохраняем user_id в контексте
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
+		next(w, r.WithContext(ctx))
+	}
+}
+
 func respondError(w http.ResponseWriter, message string, status int) {
 
 	w.Header().Set("Content-Type", "application/json")
@@ -175,6 +227,12 @@ func respondError(w http.ResponseWriter, message string, status int) {
 }
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
+
+	userID, ok := r.Context().Value(userIDKey).(int64)
+	if !ok {
+		respondError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	filter := r.URL.Query().Get("filter")
 	sortby := r.URL.Query().Get("sort")
@@ -202,7 +260,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//вызов слоя бд
-	if tfilter, err := storage.GetTodos(filter, sortby, order, db); err != nil {
+	if tfilter, err := storage.GetTodos(filter, sortby, order, db, userID); err != nil {
 		log.Printf("Get task error: %v", err)
 		respondError(w, "Get task error", http.StatusInternalServerError)
 		return
@@ -215,11 +273,16 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 
+	userID, ok := r.Context().Value(userIDKey).(int64)
+	if !ok {
+		respondError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	var (
-		t       storage.DBtodo
-		resid   int64
-		errDB   error
-		user_id int = 1
+		t     storage.DBtodo
+		resid int64
+		errDB error
 	)
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
@@ -242,7 +305,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 
 	//вызов слоя бд
 	t.Created = time.Now()
-	if resid, errDB = storage.AddTodo(t, db, user_id); errDB != nil {
+	if resid, errDB = storage.AddTodo(t, db, userID); errDB != nil {
 		log.Printf("Add task error")
 		respondError(w, "Add task error", http.StatusInternalServerError)
 		return
@@ -255,6 +318,12 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateTodo(w http.ResponseWriter, r *http.Request) {
+
+	userID, ok := r.Context().Value(userIDKey).(int64)
+	if !ok {
+		respondError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	var upd storage.UpdateTodoRequest
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
@@ -287,7 +356,7 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//вызов слоя бд
-	todo, err := storage.UpdateTodo(id, upd, db)
+	todo, err := storage.UpdateTodo(id, upd, db, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			respondError(w, "Not Found", http.StatusNotFound)
@@ -305,6 +374,12 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
 
+	userID, ok := r.Context().Value(userIDKey).(int64)
+	if !ok {
+		respondError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	idstring := r.PathValue("id")
 	id, err := strconv.Atoi(idstring)
 	if err != nil {
@@ -314,7 +389,7 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//вызов слоя бд
-	if t, err := storage.DeleteTodo(id, db); err != nil {
+	if t, err := storage.DeleteTodo(id, db, userID); err != nil {
 		if err == sql.ErrNoRows {
 			respondError(w, "Not Found", http.StatusNotFound)
 			log.Printf("Not Found ID")
@@ -335,6 +410,12 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 
 func getStats(w http.ResponseWriter, r *http.Request) {
 
+	userID, ok := r.Context().Value(userIDKey).(int64)
+	if !ok {
+		respondError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	var (
 		total     int
 		completed int
@@ -343,7 +424,7 @@ func getStats(w http.ResponseWriter, r *http.Request) {
 	)
 
 	//вызов слоя бд
-	if total, completed, pending, err = storage.GetStats(db); err != nil {
+	if total, completed, pending, err = storage.GetStats(db, userID); err != nil {
 		respondError(w, "Get stats error", http.StatusInternalServerError)
 		log.Printf("Get stats error: %v", err)
 		return
@@ -405,6 +486,7 @@ func registration(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+
 	var auth AuthRequest
 	r.Body = http.MaxBytesReader(w, r.Body, 1024)
 	if err := json.NewDecoder(r.Body).Decode(&auth); err != nil {
@@ -432,7 +514,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(auth.Password))
 	if err != nil {
-		respondError(w, "Login or password is incorrect", http.StatusBadRequest)
+		respondError(w, "Login or password is incorrect", http.StatusUnauthorized)
 		return
 	}
 	token, errorToken := generateToken(id)
@@ -441,5 +523,4 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(token)
-
 }

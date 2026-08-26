@@ -78,7 +78,7 @@ func NewDatabase(dbFile string) (*sql.DB, error) {
 	return newDB, nil
 }
 
-func AddTodo(t DBtodo, db *sql.DB, user_id int) (int64, error) {
+func AddTodo(t DBtodo, db *sql.DB, user_id int64) (int64, error) {
 
 	var (
 		result sql.Result
@@ -96,7 +96,7 @@ func AddTodo(t DBtodo, db *sql.DB, user_id int) (int64, error) {
 	return id, nil
 }
 
-func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo, error) {
+func GetTodos(filter string, sortby string, order string, db *sql.DB, userID int64) ([]DBtodo, error) {
 
 	var (
 		todos       []DBtodo
@@ -159,7 +159,7 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 		}
 	}
 
-	rows, err := db.Query(request+"where user_id = ?,"+WhereClause, 1)
+	rows, err := db.Query(request+"where user_id = ?,"+WhereClause, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -179,28 +179,28 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 	return todos, nil
 }
 
-func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
+func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB, userID int64) (DBtodo, error) {
 
 	var (
 		t   DBtodo
 		err error
 	)
 	if upd.Completed != nil && upd.Title == nil {
-		if _, err = db.Exec("update todos set completed = ? where id =?", *upd.Completed, id); err != nil {
+		if _, err = db.Exec("update todos set completed = ? where id =? AND user_id = ?", *upd.Completed, id, userID); err != nil {
 			return t, err
 		}
 	}
 	if upd.Title != nil && upd.Completed == nil {
-		if _, err = db.Exec("update todos set title = ? where id =?", *upd.Title, id); err != nil {
+		if _, err = db.Exec("update todos set title = ? where id =? AND user_id = ?", *upd.Title, id, userID); err != nil {
 			return t, err
 		}
 	}
 	if upd.Title != nil && upd.Completed != nil {
-		if _, err = db.Exec("update todos set title = ?, completed = ? where id =?", *upd.Title, *upd.Completed, id); err != nil {
+		if _, err = db.Exec("update todos set title = ?, completed = ? where id =? AND user_id = ?", *upd.Title, *upd.Completed, id, userID); err != nil {
 			return t, err
 		}
 	}
-	rows, err := db.Query("select * from todos where id = ?", id)
+	rows, err := db.Query("select * from todos where id = ? AND user_id = ?", id, userID)
 	if err != nil {
 		return t, err
 	}
@@ -222,14 +222,14 @@ func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB) (DBtodo, error) {
 	return t, nil
 }
 
-func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
+func DeleteTodo(id int, db *sql.DB, userID int64) (DBtodo, error) {
 
 	var (
 		err error
 		t   DBtodo
 	)
 	//получаем задачу
-	rows, err := db.Query("select * from todos where id = ?", id)
+	rows, err := db.Query("select * from todos where id = ? AND user_id = ?", id, userID)
 	if err != nil {
 		return DBtodo{}, err
 	}
@@ -248,20 +248,20 @@ func DeleteTodo(id int, db *sql.DB) (DBtodo, error) {
 		return DBtodo{}, err
 	}
 
-	if _, err = db.Exec("delete from todos where id = ?", id); err != nil {
+	if _, err = db.Exec("delete from todos where id = ? AND user_id = ?", id, userID); err != nil {
 		return DBtodo{}, err
 	}
 	return t, err
 }
 
-func GetStats(db *sql.DB) (int, int, int, error) {
+func GetStats(db *sql.DB, userID int64) (int, int, int, error) {
 
 	var (
 		total     int
 		completed int
 		pending   int
 	)
-	rows, err := db.Query("select count(*) from todos")
+	rows, err := db.Query("select count(*) from todos where user_id = ?", userID)
 	if err != nil {
 		return 0, 0, 0, err
 	}
@@ -274,7 +274,7 @@ func GetStats(db *sql.DB) (int, int, int, error) {
 	if err = rows.Err(); err != nil {
 		return 0, 0, 0, err
 	}
-	rows, err = db.Query("select count(*) from todos where completed = 1")
+	rows, err = db.Query("select count(*) from todos where completed = 1 AND user_id = ?", userID)
 	if err != nil {
 		return 0, 0, 0, err
 	}
