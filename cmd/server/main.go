@@ -510,12 +510,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, hash, err := storage.GetUserByUsername(auth.Username, db)
-	if err != nil {
-		respondError(w, "Login service is not available", http.StatusInternalServerError)
-		return
-	}
 	if err == sql.ErrNoRows {
 		respondError(w, "Login or password is incorrect", http.StatusUnauthorized)
+		return
+	}
+	if err != nil {
+		respondError(w, "Login service is not available", http.StatusInternalServerError)
 		return
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(auth.Password))
