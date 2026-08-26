@@ -211,6 +211,12 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			respondError(w, "Invalid user_id in token", http.StatusUnauthorized)
 			return
 		}
+		if exp, ok := claims["exp"].(float64); ok {
+			if int64(exp) < time.Now().Unix() {
+				respondError(w, "Token expired", http.StatusUnauthorized)
+				return
+			}
+		}
 		userID := int64(userIDFloat)
 
 		// Сохраняем user_id в контексте
@@ -457,7 +463,7 @@ func registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(auth.Username) < 3 {
-		respondError(w, "Password is too short. It must been longer than 2 symbols", http.StatusBadRequest)
+		respondError(w, "Username is too short. It must been longer than 2 symbols", http.StatusBadRequest)
 		return
 	}
 	user_id, err := storage.CreateUser(auth.Username, auth.Password, db)
@@ -508,8 +514,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 		respondError(w, "Login service is not available", http.StatusInternalServerError)
 		return
 	}
-	if id == 0 || hash == "" {
-		respondError(w, "Login or password is incorrect", http.StatusBadRequest)
+	if err == sql.ErrNoRows {
+		respondError(w, "Login or password is incorrect", http.StatusUnauthorized)
 		return
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(auth.Password))
@@ -522,5 +528,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 		respondError(w, "Login service is not available", http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(token)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }

@@ -111,11 +111,11 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB, userID int
 
 	case "completed":
 		request = BaseRequest
-		WhereClause = " completed = 1"
+		WhereClause = " AND completed = 1"
 
 	case "active":
 		request = BaseRequest
-		WhereClause = " completed = 0"
+		WhereClause = " AND completed = 0"
 
 	default:
 		request = BaseRequest
@@ -159,7 +159,7 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB, userID int
 		}
 	}
 
-	rows, err := db.Query(request+"where user_id = ?,"+WhereClause, userID)
+	rows, err := db.Query(request+" where user_id = ?"+WhereClause, userID)
 	if err != nil {
 		return nil, err
 	}
