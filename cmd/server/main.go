@@ -108,12 +108,12 @@ func main() {
 		w.Write([]byte("OK"))
 	}))
 
-	http.HandleFunc("GET /todos/stats", corsMiddleware(getStats))
+	http.HandleFunc("GET /todos/stats", corsMiddleware(authMiddleware(getStats)))
 	//CRUD
-	http.HandleFunc("GET /todos", corsMiddleware(getTodos))
-	http.HandleFunc("POST /todos", corsMiddleware(createTodo))
-	http.HandleFunc("DELETE /todos/{id}", corsMiddleware(deleteTodo))
-	http.HandleFunc("PATCH /todos/{id}", corsMiddleware(updateTodo))
+	http.HandleFunc("GET /todos", corsMiddleware(authMiddleware(getTodos)))
+	http.HandleFunc("POST /todos", corsMiddleware(authMiddleware(createTodo)))
+	http.HandleFunc("DELETE /todos/{id}", corsMiddleware(authMiddleware(deleteTodo)))
+	http.HandleFunc("PATCH /todos/{id}", corsMiddleware(authMiddleware(updateTodo)))
 
 	//auth
 	http.HandleFunc("POST /register", corsMiddleware(registration))
