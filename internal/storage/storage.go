@@ -302,6 +302,8 @@ func CreateUser(username, password string, db *sql.DB) (int64, error) {
 	result, err := db.Exec(insertUsers, username, string(hash))
 	if err != nil {
 		return 0, err
+	} else if err == sql.ErrTxDone {
+		return 0, err
 	}
 
 	return result.LastInsertId()

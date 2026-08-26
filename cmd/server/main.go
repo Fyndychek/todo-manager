@@ -17,6 +17,7 @@ import (
 
 	_ "github.com/Fyndychek/todo-manager/internal/handlers"
 	"github.com/Fyndychek/todo-manager/internal/storage"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -27,6 +28,26 @@ var (
 type AuthRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+
+func init() {
+
+	if len(jwtSecret) == 0 {
+		jwtSecret = []byte("default-secret-change-me")
+	}
+
+}
+
+func generateToken(userID int64) (string, error) {
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	})
+
+	return token.SignedString(jwtSecret)
 }
 
 func main() {
@@ -343,6 +364,42 @@ func getStats(w http.ResponseWriter, r *http.Request) {
 
 func registration(w http.ResponseWriter, r *http.Request) {
 
+	var auth AuthRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	if err := json.NewDecoder(r.Body).Decode(&auth); err != nil {
+		log.Printf("Decode error: %v", err)
+		respondError(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	if len(auth.Password) < 4 {
+		respondError(w, "Password is too short. It must been longer than 3 symbols", http.StatusBadRequest)
+		return
+	}
+	if len(auth.Username) < 3 {
+		respondError(w, "Password is too short. It must been longer than 2 symbols", http.StatusBadRequest)
+		return
+	}
+	user_id, err := storage.CreateUser(auth.Username, auth.Password, db)
+	if err != nil {
+		respondError(w, "Create user error", http.StatusInternalServerError)
+		log.Printf("Create user error: %v", err)
+		return
+	} else if err == sql.ErrTxDone {
+		respondError(w, "This name is already taken", http.StatusConflict)
+		log.Printf("This name is already taken: %v", err)
+		return
+	}
+	log.Printf("User is created: %v", err)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	resp := struct {
+		User_id  int64  `json:"user_id"`
+		Username string `json:"username"`
+	}{
+		User_id:  user_id,
+		Username: auth.Username,
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
