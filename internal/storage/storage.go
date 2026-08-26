@@ -101,65 +101,55 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB, userID int
 	var (
 		todos       []DBtodo
 		t           DBtodo
-		BaseRequest string = "select * from todos"
-		request     string
-		WhereClause string = ""
+		BaseRequest string = "select id, title, completed, created from todos where user_id = ?"
 	)
 	switch filter {
-	case "all":
-		request = BaseRequest
 
 	case "completed":
-		request = BaseRequest
-		WhereClause = " AND completed = 1"
+		BaseRequest += " AND completed = 1"
 
 	case "active":
-		request = BaseRequest
-		WhereClause = " AND completed = 0"
-
-	default:
-		request = BaseRequest
-
+		BaseRequest += " AND completed = 0"
 	}
 
 	switch sortby {
 	case "id":
 		if order == "desc" {
-			request = request + " order by id DESC"
+			BaseRequest += " order by id DESC"
 		} else {
-			request = request + " order by id ASC"
+			BaseRequest += " order by id ASC"
 		}
 
 	case "title":
 		if order == "desc" {
-			request = request + " order by title DESC"
+			BaseRequest += " order by title DESC"
 		} else {
-			request = request + " order by title ASC"
+			BaseRequest += " order by title ASC"
 		}
 
 	case "completed":
 		if order == "desc" {
-			request = request + " order by completed DESC"
+			BaseRequest += " order by completed DESC"
 		} else {
-			request = request + " order by completed ASC"
+			BaseRequest += " order by completed ASC"
 		}
 
 	case "created":
 		if order == "desc" {
-			request = request + " order by created DESC"
+			BaseRequest += " order by created DESC"
 		} else {
-			request = request + " order by created ASC"
+			BaseRequest += " order by created ASC"
 		}
 
 	default:
 		if order == "desc" {
-			request = request + " order by title DESC"
+			BaseRequest += " order by title DESC"
 		} else {
-			request = request + " order by title ASC"
+			BaseRequest += " order by title ASC"
 		}
 	}
 
-	rows, err := db.Query(request+" where user_id = ?"+WhereClause, userID)
+	rows, err := db.Query(BaseRequest, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +190,7 @@ func UpdateTodo(id int, upd UpdateTodoRequest, db *sql.DB, userID int64) (DBtodo
 			return t, err
 		}
 	}
-	rows, err := db.Query("select * from todos where id = ? AND user_id = ?", id, userID)
+	rows, err := db.Query("elect id, title, completed, created from todos where id = ? AND user_id = ?", id, userID)
 	if err != nil {
 		return t, err
 	}
@@ -229,7 +219,7 @@ func DeleteTodo(id int, db *sql.DB, userID int64) (DBtodo, error) {
 		t   DBtodo
 	)
 	//получаем задачу
-	rows, err := db.Query("select * from todos where id = ? AND user_id = ?", id, userID)
+	rows, err := db.Query("select id, title, completed, created from todos where id = ? AND user_id = ?", id, userID)
 	if err != nil {
 		return DBtodo{}, err
 	}

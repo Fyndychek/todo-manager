@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo Manager</title>
+    <!-- Font Awesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ----- Общие сбросы и переменные ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: #0b0e14;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        :root {
+            --bg-card: #181e2b;
+            --bg-input: #222b3a;
+            --text-primary: #eef2f8;
+            --text-secondary: #94a3b8;
+            --accent: #6c5ce7;
+            --accent-hover: #5a4bd1;
+            --success: #00b894;
+            --danger: #ff6b6b;
+            --border-radius: 16px;
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            --transition: 0.25s ease;
+        }
+
+        /* ----- Контейнер приложения ----- */
+        .app {
+            max-width: 900px;
+            width: 100%;
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 30px 35px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ----- Страница авторизации ----- */
+        .auth-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .auth-page h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            background: var(--bg-input);
+            padding: 6px;
+            border-radius: 40px;
+            width: fit-content;
+            margin-bottom: 10px;
+        }
+
+        .auth-tab {
+            padding: 10px 30px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .auth-tab.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .auth-form {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .auth-form input {
+            padding: 14px 20px;
+            background: var(--bg-input);
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .auth-form input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25);
+        }
+
+        .auth-form button {
+            padding: 14px;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        }
+
+        .auth-form button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.5);
+        }
+
+        .auth-error {
+            color: var(--danger);
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 1.5em;
+        }
+
+        /* ----- Панель задач (скрыта по умолчанию) ----- */
+        .todos-page {
+            display: none;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .todos-page.active {
+            display: flex;
+        }
+
+        /* Верхняя панель: заголовок + выход */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h2 {
+            color: var(--text-primary);
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .header .logout-btn {
+            background: transparent;
+            border: 1px solid #3d4a5c;
+            color: var(--text-secondary);
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header .logout-btn:hover {
+            background: #2d3748;
+            color: var(--text-primary);
+            border-color: var(--danger);
+        }
+
+        /* Статистика */
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            background: var(--bg-input);
+            padding: 16px 22px;
+            border-radius: 14px;
+        }
+
+        .stats span {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stats strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .stats .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stats .stat-item i {
+            color: var(--accent);
+        }
+
+        /* Добавление задачи */
+        .add-todo {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .add-todo input {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 20px;
+            background: var(--bg-input);
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .add-todo input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25);
+        }
+
+        .add-todo button {
+            padding: 14px 28px;
+            background: var(--success);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-todo button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
+        }
+
+        /* Фильтры + сортировка */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            background: var(--bg-input);
+            padding: 12px 18px;
+            border-radius: 14px;
+        }
+
+        .controls .filter-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            background: transparent;
+            border: 1px solid #3d4a5c;
+            color: var(--text-secondary);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .controls button.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .controls button:hover:not(.active) {
+            background: #2d3748;
+            border-color: #5a6b7e;
+        }
+
+        .controls .sort-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .controls .sort-group select {
+            background: var(--bg-input);
+            border: 1px solid #3d4a5c;
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 30px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .controls .sort-group select option {
+            background: var(--bg-card);
+        }
+
+        /* Список задач */
+        .todo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .todo-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .todo-list::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-radius: 10px;
+        }
+
+        .todo-list::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--bg-input);
+            padding: 14px 18px;
+            border-radius: 12px;
+            transition: var(--transition);
+            animation: fadeIn 0.25s ease;
+        }
+
+        .todo-item:hover {
+            background: #222d3f;
+            transform: translateX(4px);
+        }
+
+        .todo-item .checkbox {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid #4a5a70;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: var(--transition);
+            color: transparent;
+        }
+
+        .todo-item .checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        .todo-item .title {
+            flex: 1;
+            color: var(--text-primary);
+            font-size: 1rem;
+            word-break: break-word;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .todo-item .title.completed {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .todo-item .title-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--accent);
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            padding: 2px 0;
+        }
+
+        .todo-item .actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .todo-item .actions button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .todo-item .actions button:hover {
+            background: #2d3748;
+            color: var(--text-primary);
+        }
+
+        .todo-item .actions .delete:hover {
+            color: var(--danger);
+        }
+
+        /* Анимация */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 650px) {
+            .app {
+                padding: 20px;
+            }
+            .controls .sort-group {
+                margin-left: 0;
+                width: 100%;
+            }
+            .header h2 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" id="app">
+        <!-- Страница авторизации -->
+        <div class="auth-page" id="authPage">
+            <h1><i class="fas fa-tasks" style="margin-right: 12px;"></i>Todo Manager</h1>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Вход</button>
+                <button class="auth-tab" data-tab="register">Регистрация</button>
+            </div>
+            <form class="auth-form" id="authForm">
+                <input type="text" id="authUsername" placeholder="Имя пользователя" required minlength="3" />
+                <input type="password" id="authPassword" placeholder="Пароль" required minlength="4" />
+                <div class="auth-error" id="authError"></div>
+                <button type="submit" id="authSubmitBtn">Войти</button>
+            </form>
+        </div>
+
+        <!-- Панель задач -->
+        <div class="todos-page" id="todosPage">
+            <div class="header">
+                <h2><i class="fas fa-list-check" style="margin-right: 10px;"></i>Мои задачи</h2>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            </div>
+
+            <div class="stats" id="statsContainer">
+                <span class="stat-item"><i class="fas fa-circle"></i> Всего: <strong id="totalCount">0</strong></span>
+                <span class="stat-item"><i class="fas fa-check-circle" style="color: var(--success);"></i> Выполнено: <strong id="completedCount">0</strong></span>
+                <span class="stat-item"><i class="fas fa-clock" style="color: #fdcb6e;"></i> В работе: <strong id="pendingCount">0</strong></span>
+            </div>
+
+            <div class="add-todo">
+                <input type="text" id="newTodoInput" placeholder="Новая задача..." maxlength="255" />
+                <button id="addTodoBtn"><i class="fas fa-plus"></i> Добавить</button>
+            </div>
+
+            <div class="controls">
+                <div class="filter-group">
+                    <button class="active" data-filter="all">Все</button>
+                    <button data-filter="active">Активные</button>
+                    <button data-filter="completed">Выполненные</button>
+                </div>
+                <div class="sort-group">
+                    <label for="sortSelect" style="color: var(--text-secondary); font-size: 0.9rem;">Сортировка:</label>
+                    <select id="sortSelect">
+                        <option value="created,asc">По дате (старые)</option>
+                        <option value="created,desc">По дате (новые)</option>
+                        <option value="title,asc">По названию (А–Я)</option>
+                        <option value="title,desc">По названию (Я–А)</option>
+                        <option value="completed,asc">По статусу (невып.)</option>
+                        <option value="completed,desc">По статусу (вып.)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="todo-list" id="todoList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ----- Конфигурация -----
+        const API_BASE = 'http://localhost:8080'; // замените на ваш URL
+
+        // ----- Состояние -----
+        let token = localStorage.getItem('token') || null;
+        let currentFilter = 'all';
+        let currentSort = 'created';
+        let currentOrder = 'asc';
+        let todos = [];
+
+        // ----- DOM-элементы -----
+        const authPage = document.getElementById('authPage');
+        const todosPage = document.getElementById('todosPage');
+        const authForm = document.getElementById('authForm');
+        const authUsername = document.getElementById('authUsername');
+        const authPassword = document.getElementById('authPassword');
+        const authError = document.getElementById('authError');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const todoList = document.getElementById('todoList');
+        const newTodoInput = document.getElementById('newTodoInput');
+        const addTodoBtn = document.getElementById('addTodoBtn');
+        const totalCount = document.getElementById('totalCount');
+        const completedCount = document.getElementById('completedCount');
+        const pendingCount = document.getElementById('pendingCount');
+        const filterBtns = document.querySelectorAll('.filter-group button');
+        const sortSelect = document.getElementById('sortSelect');
+
+        // ----- Вспомогательные функции -----
+        function setAuthMode(mode) {
+            authTabs.forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === mode);
+            });
+            if (mode === 'login') {
+                authSubmitBtn.textContent = 'Войти';
+                authForm.querySelector('button[type="submit"]').textContent = 'Войти';
+                authError.textContent = '';
+            } else {
+                authSubmitBtn.textContent = 'Зарегистрироваться';
+                authForm.querySelector('button[type="submit"]').textContent = 'Зарегистрироваться';
+                authError.textContent = '';
+            }
+        }
+
+        function showAuthError(msg) {
+            authError.textContent = msg;
+        }
+
+        function switchToTodos() {
+            authPage.style.display = 'none';
+            todosPage.classList.add('active');
+            loadTodos();
+        }
+
+        function switchToAuth() {
+            todosPage.classList.remove('active');
+            authPage.style.display = 'flex';
+            token = null;
+            localStorage.removeItem('token');
+            // Очищаем список
+            todoList.innerHTML = '';
+        }
+
+        // ----- HTTP-запросы с токеном -----
+        async function apiRequest(endpoint, method = 'GET', body = null, needsAuth = true) {
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (needsAuth && token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const options = {
+                method,
+                headers,
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`, options);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    const errMsg = data.error || data.message || 'Ошибка запроса';
+                    throw new Error(errMsg);
+                }
+                return data;
+            } catch (e) {
+                throw e;
+            }
+        }
+
+        // ----- Авторизация -----
+        async function handleAuth(e) {
+            e.preventDefault();
+            const username = authUsername.value.trim();
+            const password = authPassword.value.trim();
+            if (!username || !password) {
+                showAuthError('Заполните все поля');
+                return;
+            }
+            const isLogin = authSubmitBtn.textContent === 'Войти';
+            const endpoint = isLogin ? '/login' : '/register';
+            try {
+                const data = await apiRequest(endpoint, 'POST', { username, password }, false);
+                if (isLogin) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    showAuthError('');
+                    switchToTodos();
+                } else {
+                    // Регистрация успешна – переключаем на логин
+                    showAuthError('Регистрация прошла успешно! Теперь войдите.');
+                    setAuthMode('login');
+                    authUsername.value = '';
+                    authPassword.value = '';
+                }
+            } catch (err) {
+                showAuthError(err.message);
+            }
+        }
+
+        // ----- Загрузка задач и статистики -----
+        async function loadTodos() {
+            try {
+                const params = new URLSearchParams({
+                    filter: currentFilter,
+                    sort: currentSort,
+                    order: currentOrder,
+                });
+                const todosData = await apiRequest(`/todos?${params}`);
+                todos = todosData;
+                renderTodos();
+
+                const stats = await apiRequest('/todos/stats');
+                totalCount.textContent = stats.total || 0;
+                completedCount.textContent = stats.completed || 0;
+                pendingCount.textContent = stats.pending || 0;
+            } catch (err) {
+                if (err.message.includes('401')) {
+                    // Токен недействителен
+                    switchToAuth();
+                } else {
+                    alert('Ошибка загрузки: ' + err.message);
+                }
+            }
+        }
+
+        // ----- Отрисовка списка -----
+        function renderTodos() {
+            todoList.innerHTML = '';
+            if (todos.length === 0) {
+                todoList.innerHTML = `<div style="color: var(--text-secondary); text-align: center; padding: 30px;">Задач пока нет</div>`;
+                return;
+            }
+            todos.forEach(todo => {
+                const item = document.createElement('div');
+                item.className = 'todo-item';
+                item.dataset.id = todo.id;
+
+                // Чекбокс
+                const checkbox = document.createElement('div');
+                checkbox.className = 'checkbox' + (todo.completed ? ' checked' : '');
+                checkbox.innerHTML = todo.completed ? '<i class="fas fa-check"></i>' : '';
+                checkbox.addEventListener('click', () => toggleTodo(todo.id, !todo.completed));
+
+                // Заголовок
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'title' + (todo.completed ? ' completed' : '');
+                titleSpan.textContent = todo.title;
+                // Двойной клик для редактирования
+                titleSpan.addEventListener('dblclick', () => startEdit(todo.id));
+
+                // Действия
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+                editBtn.title = 'Редактировать';
+                editBtn.addEventListener('click', () => startEdit(todo.id));
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete';
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                deleteBtn.title = 'Удалить';
+                deleteBtn.addEventListener('click', () => deleteTodo(todo.id));
+
+                actions.appendChild(editBtn);
+                actions.appendChild(deleteBtn);
+
+                item.appendChild(checkbox);
+                item.appendChild(titleSpan);
+                item.appendChild(actions);
+                todoList.appendChild(item);
+            });
+        }
+
+        // ----- CRUD операции -----
+        async function addTodo() {
+            const title = newTodoInput.value.trim();
+            if (!title) return;
+            try {
+                const newTodo = await apiRequest('/todos', 'POST', { title, completed: false });
+                newTodoInput.value = '';
+                loadTodos();
+            } catch (err) {
+                alert('Ошибка добавления: ' + err.message);
+            }
+        }
+
+        async function toggleTodo(id, completed) {
+            try {
+                await apiRequest(`/todos/${id}`, 'PATCH', { completed });
+                loadTodos();
+            } catch (err) {
+                alert('Ошибка обновления: ' + err.message);
+            }
+        }
+
+        async function deleteTodo(id) {
+            if (!confirm('Удалить задачу?')) return;
+            try {
+                await apiRequest(`/todos/${id}`, 'DELETE');
+                loadTodos();
+            } catch (err) {
+                alert('Ошибка удаления: ' + err.message);
+            }
+        }
+
+        // Редактирование (замена на input)
+        function startEdit(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+            // Находим элемент
+            const items = todoList.querySelectorAll('.todo-item');
+            for (const item of items) {
+                if (parseInt(item.dataset.id) === id) {
+                    const titleSpan = item.querySelector('.title');
+                    const currentText = titleSpan.textContent;
+                    const input = document.createElement('input');
+                    input.className = 'title-input';
+                    input.type = 'text';
+                    input.value = currentText;
+                    input.maxLength = 255;
+                    titleSpan.replaceWith(input);
+                    input.focus();
+                    input.select();
+
+                    const finishEdit = async () => {
+                        const newTitle = input.value.trim();
+                        if (newTitle && newTitle !== currentText) {
+                            try {
+                                await apiRequest(`/todos/${id}`, 'PATCH', { title: newTitle });
+                                loadTodos();
+                            } catch (err) {
+                                alert('Ошибка редактирования: ' + err.message);
+                                loadTodos(); // восстановить
+                            }
+                        } else {
+                            loadTodos(); // отмена
+                        }
+                    };
+
+                    input.addEventListener('blur', finishEdit);
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            input.blur();
+                        }
+                        if (e.key === 'Escape') {
+                            loadTodos(); // отмена
+                        }
+                    });
+                    break;
+                }
+            }
+        }
+
+        // ----- Фильтры и сортировка -----
+        function setFilter(filter) {
+            currentFilter = filter;
+            filterBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            loadTodos();
+        }
+
+        function setSort() {
+            const val = sortSelect.value;
+            const [sort, order] = val.split(',');
+            currentSort = sort;
+            currentOrder = order;
+            loadTodos();
+        }
+
+        // ----- Выход -----
+        function logout() {
+            switchToAuth();
+            // Сброс фильтров
+            setFilter('all');
+            sortSelect.value = 'created,asc';
+            currentSort = 'created';
+            currentOrder = 'asc';
+        }
+
+        // ----- Инициализация -----
+        function init() {
+            // Если есть токен, сразу показываем задачи
+            if (token) {
+                switchToTodos();
+            } else {
+                switchToAuth();
+            }
+
+            // События
+            authTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    setAuthMode(tab.dataset.tab);
+                });
+            });
+
+            authForm.addEventListener('submit', handleAuth);
+
+            logoutBtn.addEventListener('click', logout);
+
+            addTodoBtn.addEventListener('click', addTodo);
+            newTodoInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTodo();
+            });
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+            });
+
+            sortSelect.addEventListener('change', setSort);
+
+            // Обработка ошибок сети
+            window.addEventListener('unhandledrejection', (e) => {
+                console.error('Unhandled rejection:', e.reason);
+            });
+        }
+
+        // Запуск
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>

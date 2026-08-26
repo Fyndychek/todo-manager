@@ -90,7 +90,7 @@ func main() {
 		}
 		// Получаем текущую рабочую директорию
 		wd, _ := os.Getwd()
-		filePath := filepath.Join(wd, "cmd", "sandbox", "index.html")
+		filePath := filepath.Join(wd, "cmd", "sandbox", "index4.html")
 		http.ServeFile(w, r, filePath)
 	}))
 	http.HandleFunc("/neiroslop2", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
@@ -306,7 +306,7 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 	//вызов слоя бд
 	t.Created = time.Now()
 	if resid, errDB = storage.AddTodo(t, db, userID); errDB != nil {
-		log.Printf("Add task error")
+		log.Printf("Add task error: %v", errDB)
 		respondError(w, "Add task error", http.StatusInternalServerError)
 		return
 
