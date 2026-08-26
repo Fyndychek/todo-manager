@@ -37,12 +37,11 @@ func init() {
 	if len(jwtSecret) == 0 {
 		jwtSecret = []byte("default-secret-change-me")
 	}
-
 }
 
 func generateToken(userID int64) (string, error) {
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
@@ -381,13 +380,15 @@ func registration(w http.ResponseWriter, r *http.Request) {
 	}
 	user_id, err := storage.CreateUser(auth.Username, auth.Password, db)
 	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			respondError(w, "This name is already taken", http.StatusConflict)
+			log.Printf("This name is already taken: %v", err)
+			return
+		}
 		respondError(w, "Create user error", http.StatusInternalServerError)
 		log.Printf("Create user error: %v", err)
 		return
-	} else if err == sql.ErrTxDone {
-		respondError(w, "This name is already taken", http.StatusConflict)
-		log.Printf("This name is already taken: %v", err)
-		return
+
 	}
 	log.Printf("User is created: %v", err)
 	w.Header().Set("Content-Type", "application/json")

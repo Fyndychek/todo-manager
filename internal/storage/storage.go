@@ -159,7 +159,7 @@ func GetTodos(filter string, sortby string, order string, db *sql.DB) ([]DBtodo,
 		}
 	}
 
-	rows, err := db.Query(request+"where user_id = ?"+WhereClause, 1)
+	rows, err := db.Query(request+"where user_id = ?,"+WhereClause, 1)
 	if err != nil {
 		return nil, err
 	}
