@@ -35,12 +35,19 @@ type contextKey string
 
 const userIDKey contextKey = "userID"
 
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+var (
+	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+	dbFile    = os.Getenv("DB_FILE")
+	p         = os.Getenv("PORT")
+)
 
 func init() {
 
 	if len(jwtSecret) == 0 {
 		jwtSecret = []byte("default-secret-change-me")
+	}
+	if dbFile == "" {
+		dbFile = "todos.db"
 	}
 }
 
@@ -57,10 +64,6 @@ func generateToken(userID int64) (string, error) {
 func main() {
 
 	var err error
-	dbFile := os.Getenv("DB_FILE")
-	if dbFile == "" {
-		dbFile = "todos.db"
-	}
 	db, err = storage.NewDatabase(dbFile)
 	if err != nil {
 		log.Fatal(err)
@@ -68,7 +71,7 @@ func main() {
 	defer db.Close()
 
 	port := 8080
-	if p := os.Getenv("PORT"); p != "" {
+	if p != "" {
 		if v, err := strconv.Atoi(p); err == nil {
 			port = v
 		}
