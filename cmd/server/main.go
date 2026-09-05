@@ -103,7 +103,7 @@ func main() {
 		}
 		// Получаем текущую рабочую директорию
 		wd, _ := os.Getwd()
-		filePath := filepath.Join(wd, "cmd", "sandbox", "index3.html")
+		filePath := filepath.Join(wd, "cmd", "sandbox", "index5.html")
 		http.ServeFile(w, r, filePath)
 	}))
 	http.HandleFunc("/health", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {

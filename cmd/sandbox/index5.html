@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>CSS-псевдографика • ASCII-арт</title>
+    <style>
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .ascii-art {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            line-height: 1.2;
+            color: #f0e6d0;
+            background: #16213e;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+            white-space: pre;  /* сохраняем пробелы */
+        }
+        /* Раскраска отдельных символов через span (можно и в самом тексте) */
+        .red   { color: #ff6b6b; }
+        .green { color: #51cf66; }
+        .blue  { color: #4dabf7; }
+        .yellow{ color: #fcc419; }
+        .pink  { color: #f06595; }
+    </style>
+</head>
+<body>
+    <div class="ascii-art">
+        <span class="red">   ❤️   </span>
+        <span class="pink">  ╔═══╗ </span>
+        <span class="yellow"> ║ ^ ^ ║ </span>
+        <span class="green"> ║ (•_•) </span>
+        <span class="blue">  ╚═╦═╝ </span>
+        <span class="red">    ║   </span>
+        <span class="pink">   ╩   </span>
+    </div>
+</body>
+</html>
