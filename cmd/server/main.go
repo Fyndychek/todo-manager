@@ -76,34 +76,24 @@ func main() {
 			port = v
 		}
 	}
-	http.HandleFunc("/neiroslop", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/neiroslop" {
+	http.HandleFunc("/test", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/test" {
 			http.NotFound(w, r)
 			return
 		}
 		// Получаем текущую рабочую директорию
 		wd, _ := os.Getwd()
-		filePath := filepath.Join(wd, "cmd", "sandbox", "index2.html")
+		filePath := filepath.Join(wd, "cmd", "sandbox", "test.html")
 		http.ServeFile(w, r, filePath)
 	}))
-	http.HandleFunc("/handmade", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/handmade" {
+	http.HandleFunc("/main", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/main" {
 			http.NotFound(w, r)
 			return
 		}
 		// Получаем текущую рабочую директорию
 		wd, _ := os.Getwd()
-		filePath := filepath.Join(wd, "cmd", "sandbox", "index4.html")
-		http.ServeFile(w, r, filePath)
-	}))
-	http.HandleFunc("/neiroslop2", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/neiroslop2" {
-			http.NotFound(w, r)
-			return
-		}
-		// Получаем текущую рабочую директорию
-		wd, _ := os.Getwd()
-		filePath := filepath.Join(wd, "cmd", "sandbox", "index5.html")
+		filePath := filepath.Join(wd, "cmd", "sandbox", "main_paige.html")
 		http.ServeFile(w, r, filePath)
 	}))
 	http.HandleFunc("/health", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
